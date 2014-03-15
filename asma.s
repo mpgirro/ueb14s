@@ -17,13 +17,13 @@ asma:
 	movdqu (%rsi),%xmm9			# load t into xmm9
 	andps mask, %xmm8  			# xmm8 = ~xmm8 & mask, invert bits 
 	andps mask, %xmm9  			# xmm9 = ~xmm9 & mask, invert bits
-	pminub %xmm9, %xmm10		# compare 16x8 bit blocks (the chars), 
+	movdqu (%xmm8),%xmm10		# make a copy of (NOT s)
+	pminub %xmm8, %xmm9			# compare 16x8 bit blocks (the chars), 
 								# write 0xFF to xmm9 if the block in xmm9 is
 								# smaller than the one in xmm10, else write 0x00
-	andps mask, %xmm9			# invert again, the mask is correct now
-	andpd %xmm9, %rdi			# mask s, leave only the bigger than t values
-	andpd %xmm9, %rsi  			# mask t, leave only the bigger than s values
-	movdqu (%rdi),%rax  		# load masked s into u
-	orpd %rsi, %rax				# u = u | t
+	andpd %xmm8, %xmm10			# mask values in (NOT s)
+	andpd %xmm8, %xmm9			# mask values in (NOT t)
+	orpd %xmm9, %xmm10			# u = s | t
+	movdqu %xmm10,%rax  		# load u to return register		
 	ret
 	
