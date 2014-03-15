@@ -24,6 +24,6 @@ asma:
 	andpd %xmm8, %xmm10			# mask values in (NOT s)
 	andpd %xmm8, %xmm9			# mask values in (NOT t)
 	orpd %xmm9, %xmm10			# u = s | t
-	movdqu %xmm10,%rax  		# load u to return register		
+	movdqu (%xmm10),%rax  		# load u to return register		
 	ret
 	
