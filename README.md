@@ -9,12 +9,12 @@ Gegeben ist folgende C-Funktion:
 			u[i] = (s[i]>t[i]) ? s[i] : t[i];
 	}
 
-Schreiben Sie diese Funktion in Assembler unter Verwendung von pminub (viel mehr ist u ̈brigens auch nicht no ̈tig, insbesondere keine Schleife).
+Schreiben Sie diese Funktion in Assembler unter Verwendung von pminub (viel mehr ist übrigens auch nicht nötig, insbesondere keine Schleife).
 
 # Hinweise
 
 Beachten Sie, dass Sie nur dann Punkte bekommen, wenn Ihre Version *pminub* verwendet und korrekt ist, also bei gleicher (zulässiger) Eingabe das gleiche Resultat liefert wie das Original.
-Zum Assemblieren und Linken verwendet man am besten *gcc*, der Compiler- Treiber ku ̈mmert sich dann um die richtigen Optionen für *as* und *ld*.
+Zum Assemblieren und Linken verwendet man am besten *gcc*, der Compiler-Treiber kümmert sich dann um die richtigen Optionen für *as* und *ld*.
 
 # Abgabe
 
