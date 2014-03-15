@@ -2,12 +2,12 @@
 
 Gegeben ist folgende C-Funktion:
 
-> void asma(unsigned char *s, unsigned char *t, unsigned char *u) 
-> {
->   int i;
->   for (i=0; i<16; i++)
-> 		u[i] = (s[i]>t[i]) ? s[i] : t[i];
-> }
+	void asma(unsigned char *s, unsigned char *t, unsigned char *u) 
+	{
+		int i;
+		for (i=0; i<16; i++)
+			u[i] = (s[i]>t[i]) ? s[i] : t[i];
+	}
 
 Schreiben Sie diese Funktion in Assembler unter Verwendung von pminub (viel mehr ist u ̈brigens auch nicht no ̈tig, insbesondere keine Schleife).
 
