@@ -17,7 +17,7 @@ asma:
 	movdqu (%rsi),%xmm9			# load t into xmm9
 	andps mask, %xmm8  			# xmm8 = ~xmm8 & mask, invert bits 
 	andps mask, %xmm9  			# xmm9 = ~xmm9 & mask, invert bits
-	movdqu (%xmm8),%xmm10		# make a copy of (NOT s)
+	movdqu %xmm8,%xmm10		# make a copy of (NOT s)
 	pminub %xmm8, %xmm9			# compare 16x8 bit blocks (the chars), 
 								# write 0xFF to xmm9 if the block in xmm9 is
 								# smaller than the one in xmm10, else write 0x00
