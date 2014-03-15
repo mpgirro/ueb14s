@@ -20,6 +20,9 @@ void asma_c(unsigned char *s, unsigned char *t, unsigned char *u);
 /* === global variables === */
 static const char *prgname = "asmatest"; 
 
+/* === externals === */
+extern void asma(unsigned char *s, unsigned char *t, unsigned char *u);
+
 
 int main(int argc, char **argv)
 {
@@ -35,7 +38,7 @@ int main(int argc, char **argv)
  */
 static void usage(void)
 {
-    (void) fprintf( stderr, "Usage: %s [-i infile] [-o outfile] [-e errfile] <cmd> [options]\n", prgname);
+    (void) fprintf( stderr, "Usage: %s <string1> <string2>\n", prgname);
     exit(EXIT_FAILURE);
 }
 
