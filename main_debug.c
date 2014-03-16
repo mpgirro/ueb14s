@@ -28,15 +28,11 @@ int main(int argc, char **argv)
 	strncpy((char *) s, "abcdehfghijklmno", 16);
 	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
 
-
-	u[16] = '\0';
-
-
-
 	(void) printf("s: %s\n", s);
 	(void) printf("t: %s\n", t);
 	
 	asma(s,t,u);
+	u[16] = '\0';
 	
 	(void) printf("u: %s\n", u);
 	
