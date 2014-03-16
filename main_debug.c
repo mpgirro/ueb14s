@@ -12,11 +12,6 @@
 #include <assert.h>
 #include <stdarg.h>
 
-
-
-
-
-
 /* === externals === */
 extern void asma(unsigned char *s, unsigned char *t, unsigned char *u);
 
@@ -24,14 +19,24 @@ extern void asma(unsigned char *s, unsigned char *t, unsigned char *u);
 int main(int argc, char **argv)
 {
 	
-	unsigned char 	*s = "abcdehfghijklmno",
-		 			*t = "yjhdflkffkdkfkfv", 
-					*u;
+	unsigned char 	*s, *t, *u;
+	s = malloc(17);
+	t = malloc(17);
+	u = malloc(17);
+					
+	*s = "abcdehfghijklmno",
+	*t = "yjhdflkffkdkfkfv", 
+	s[16] = t[16] = u[16] = '\0';
 	
 	(void) printf("s: %s\n", s);
 	(void) printf("t: %s\n", t);
-	(void) printf("return: %s\n", asma(s,t,u));
+	(void) printf("u: %s\n", asma(s,t,u));
 	
+	free(s);
+	free(t);
+	free(u);
+	
+	return 0;
 }
 
 
