@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 #include <stdarg.h>
 
@@ -24,13 +25,20 @@ int main(int argc, char **argv)
 	t = malloc(17);
 	u = malloc(17);
 					
-	*s = "abcdehfghijklmno",
-	*t = "yjhdflkffkdkfkfv", 
-	s[16] = t[16] = u[16] = '\0';
-	
+	strncpy((char *) s, "abcdehfghijklmno", 16);
+	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
+
+
+	u[16] = '\0';
+
+
+
 	(void) printf("s: %s\n", s);
 	(void) printf("t: %s\n", t);
-	(void) printf("u: %s\n", asma(s,t,u));
+	
+	asma(s,t,u);
+	
+	(void) printf("u: %s\n", u);
 	
 	free(s);
 	free(t);
