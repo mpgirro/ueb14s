@@ -12,10 +12,10 @@
 #include <assert.h>
 #include <stdarg.h>
 
-/* === function signatures === */
-static void usage(void);
-static void errorMsg(char *msg);
-void asma_c(unsigned char *s, unsigned char *t, unsigned char *u);
+
+
+
+
 
 /* === externals === */
 extern void asma(unsigned char *s, unsigned char *t, unsigned char *u);

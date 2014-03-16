@@ -1,10 +1,10 @@
 	.globl asma
 	.type asma, @function
 	
-mask: 
-	.align
-	.size mask, 16
-	.fill 16, 1, 0xFF	
+#mask: 
+#	.align
+#	.size mask, 16
+#	.fill 16, 1, 0xFF	
 	
 asma:
 	# well, we have to compare characters like this:
@@ -15,8 +15,8 @@ asma:
 	# we can live with that, can't we
 	movdqu (%rdi),%xmm8  		# load s into xmm8
 	movdqu (%rsi),%xmm9		# load t into xmm9
-	andnpd mask, %xmm8  		# xmm8 = ~xmm8 & mask, invert bits 
-	andnpd mask, %xmm9  		# xmm9 = ~xmm9 & mask, invert bits
+	andnpd 0xFFFFFFFFFFFFFFFF, %xmm8  		# xmm8 = ~xmm8 & mask, invert bits 
+	andnpd 0xFFFFFFFFFFFFFFFF, %xmm9  		# xmm9 = ~xmm9 & mask, invert bits
 	movdqu %xmm8,%xmm10		# make a copy of (NOT s)
 	pminub %xmm8, %xmm9		# compare 16x8 bit blocks (the chars), write 
 					# 0xFF to xmm9 if block in xmm9 is smaller
