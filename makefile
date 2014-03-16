@@ -6,8 +6,8 @@ CFLAGS	+=	-Wno-trigraphs
 LDFLAGS	=	
 ASFLAGS	=	
 
-PROG	=	main
-PRJ	=	asma
+PROG	=	main_debug
+PRJ		=	asma
 CONV	=	
 SRCS	=	$(PROG).c $(PRJ).s
 OBJS	=	$(PROG).o $(PRJ).o
