@@ -13,6 +13,8 @@
 #include <assert.h>
 #include <stdarg.h>
 
+void print_hex(const char *varname, unsigned char *s);
+
 /* === externals === */
 extern void asma(unsigned char *s, unsigned char *t, unsigned char *u);
 
@@ -27,14 +29,18 @@ int main(int argc, char **argv)
 					
 	strncpy((char *) s, "abcdehfghijklmno", 16);
 	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
+	/*
+	(void) printf("s: %s (%x)\n", s, (unsigned int)(s & 0xff));
+	(void) printf("t: %s (%x)\n", t, (unsigned int)(t & 0xff));
+	*/
+	print_hex("s",s);
+	print_hex("t",t);
 
-	(void) printf("s: %s\n", s);
-	(void) printf("t: %s\n", t);
-	
 	asma(s,t,u);
 	u[16] = '\0';
 	
-	(void) printf("u: %s\n", u);
+	/*(void) printf("u: %s (%x)\n", u, (unsigned int)(u & 0xff));*/
+	print_hex("u",u);
 	
 	free(s);
 	free(t);
@@ -43,4 +49,12 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-
+void print_hex(const char *varname,unsigned char *s)
+{
+	(void) printf("%s: %s (0x",varname,s);
+	while(*s)
+	{
+		(void) printf("%02x",(unsigned int) *s++);
+	}
+	(void) printf(")\n");
+}
