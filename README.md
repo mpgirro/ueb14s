@@ -28,4 +28,4 @@ Die Vertrautheit mit dem Assembler müssen Sie beim Gespräch am Ende des Semest
 
 ## Abgabe
 
-Legen Sie ein Verzeichnis **~/abgabe/asmb** an, in das Sie die maßgeblichen Dateien stellen. Mittels **make clean** soll man alle von Werkzeugen erzeugten Dateien löschen können und **make** soll eine Datei **asma.o** erzeugen. Diese Datei soll nur die Funktion **asmb** enthalten, keinesfalls **main**. Diese Funktion soll den Aufrufkonventionen gehorchen und wird bei der Prüfung der abgegebenen Programme mit C-Code zusammengebunden.
+Legen Sie ein Verzeichnis **~/abgabe/asmb** an, in das Sie die maßgeblichen Dateien stellen. Mittels **make clean** soll man alle von Werkzeugen erzeugten Dateien löschen können und **make** soll eine Datei **asmb.o** erzeugen. Diese Datei soll nur die Funktion **asmb** enthalten, keinesfalls **main**. Diese Funktion soll den Aufrufkonventionen gehorchen und wird bei der Prüfung der abgegebenen Programme mit C-Code zusammengebunden.
