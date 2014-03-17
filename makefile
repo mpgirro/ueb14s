@@ -6,8 +6,8 @@ CFLAGS	+=	-Wno-trigraphs
 LDFLAGS	=	
 ASFLAGS	=	
 
-PROG	=	main_debug
-PRJ		=	asma
+PROG	=	main
+PRJ	=	asma
 CONV	=	
 SRCS	=	$(PROG).c $(PRJ).s
 OBJS	=	$(PROG).o $(PRJ).o
@@ -26,5 +26,6 @@ $(PRJ).o: $(PRJ).s
 clean:
 	-rm -f $(PROG) $(OBJS) *~ 
 
-
+abgabe:
+	cp makefile $(SRCS) ~/abgabe/asma/
 
