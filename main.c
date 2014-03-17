@@ -1,7 +1,7 @@
 /**
  * @file main.c
  * @author Maximilian Irro <e1026859@student.tuwien.ac.at>
- * @date last revision 2014-03-16
+ * @date last revision 2014-03-17
  * @brief testpogram for Uebersetzerbau Bsp1 "Assambler A"
  */
 
@@ -29,17 +29,13 @@ int main(int argc, char **argv)
 					
 	strncpy((char *) s, "abcdehfghijklmno", 16);
 	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
-	/*
-	(void) printf("s: %s (%x)\n", s, (unsigned int)(s & 0xff));
-	(void) printf("t: %s (%x)\n", t, (unsigned int)(t & 0xff));
-	*/
+	
 	print_hex("s",s);
 	print_hex("t",t);
 
 	asma(s,t,u);
 	u[16] = '\0';
 	
-	/*(void) printf("u: %s (%x)\n", u, (unsigned int)(u & 0xff));*/
 	print_hex("u",u);
 	
 	free(s);
