@@ -15,8 +15,8 @@ Gegeben ist folgende C-Funktion:
 		u[i] = (s[i]<t[i]) ? s[i] : t[i]; u[i] = ’\0’;
 	}
 
-Schreiben Sie diese Funktion in Assembler unter Verwendung von *pminub*. Sie dürfen dabei annehmen, dass hinter dem letzten Zeichen von s, t. und u noch 16 Bytes zugreifbar sind, und sie dürfen bis zu 15 Zeichen hinter dem Ende von u beliebig verändern.
-Für besonders effiziente Lösungen (gemessen an der Anzahl der ausgeführten Maschinenbefehle; wird ein Befehl n mal ausgeführt, zählt er n-fach) gibt es Bonuspunkte.
+Schreiben Sie diese Funktion in Assembler unter Verwendung von **pminub**. Sie dürfen dabei annehmen, dass hinter dem letzten Zeichen von s, t. und u noch 16 Bytes zugreifbar sind, und sie dürfen bis zu 15 Zeichen hinter dem Ende von u beliebig verändern.
+Für besonders effiziente Lösungen (gemessen an der Anzahl der *ausgeführten* Maschinenbefehle; wird ein Befehl n mal ausgeführt, zählt er n-fach) gibt es Bonuspunkte.
 
 
 ## Hinweise
@@ -27,4 +27,4 @@ Die Vertrautheit mit dem Assembler müssen Sie beim Gespräch am Ende des Semest
 
 ## Abgabe
 
-Legen Sie ein Verzeichnis *~/abgabe/asmb* an, in das Sie die maßgeblichen Dateien stellen. Mittels *make clean* soll man alle von Werkzeugen erzeugten Dateien löschen können und *make* soll eine Datei *asma.o* erzeugen. Diese Datei soll nur die Funktion *asmb* enthalten, keinesfalls *main*. Diese Funk- tion soll den Aufrufkonventionen gehorchen und wird bei der Prüfung der abgegebenen Programme mit C-Code zusammengebunden.
+Legen Sie ein Verzeichnis **~/abgabe/asmb** an, in das Sie die maßgeblichen Dateien stellen. Mittels **make clean** soll man alle von Werkzeugen erzeugten Dateien löschen können und **make** soll eine Datei **asma.o** erzeugen. Diese Datei soll nur die Funktion **asmb** enthalten, keinesfalls **main**. Diese Funk- tion soll den Aufrufkonventionen gehorchen und wird bei der Prüfung der abgegebenen Programme mit C-Code zusammengebunden.
