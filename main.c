@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	print_hex("s",s);
 	print_hex("t",t);
 
-	asma(s,t,u);
+	asmb(s,t,u);
 	u[16] = '\0';
 	
 	print_hex("u",u);
