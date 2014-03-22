@@ -30,7 +30,7 @@ int main(int argc, char **argv)
 	strncpy((char *) s, "abcdehfghijklmno", 16);
 	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
 
-	s[13]='\0';
+
 
 	print_hex("s",s);
 	print_hex("t",t);
