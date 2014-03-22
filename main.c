@@ -30,6 +30,8 @@ int main(int argc, char **argv)
 	strncpy((char *) s, "abcdehfghijklmno", 16);
 	strncpy((char *) t, "yjhdflkffkdkfkfv", 16);
 
+	s[13]='\0';
+
 	print_hex("s",s);
 	print_hex("t",t);
 
@@ -47,8 +49,9 @@ int main(int argc, char **argv)
 
 void print_hex(const char *varname,unsigned char *s)
 {
-	(void) printf("%s: %s (0x",varname,s);
-	while(*s)
+	int i;
+	(void) printf("%s: %s \t(0x",varname,s);
+	for(i=0;i<16;i++)
 	{
 		(void) printf("%02x",(unsigned int) *s++);
 	}
