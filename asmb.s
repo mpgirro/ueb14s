@@ -23,8 +23,8 @@ asmb:
 	mov $0, %r8				# we need this
 loop:
 
-	movdqu %r8(%xmm8), %xmm11
-	movdqu %r8(%xmm9), %xmm12
+	movdqu (%rdi,%r8), %xmm11
+	movdqu (%rsi,%r8), %xmm12
 	add $128, %r8			# r8 = r8 + 128
 	pminub %xmm11, %xmm12
 	movdqu %xmm12, (%rdx)	# mov result to rdx
