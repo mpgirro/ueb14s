@@ -2,12 +2,12 @@
 	.type asmb, @function
 	
 # make 128 bits worth of 0s
-mask: 
+zero16: 
 	.align
 	.size mask, 16
 	.fill 16, 1, 0x00
 	
-mask8:
+zero8:
 	.align
 	.size mask8, 8
 	.fill 8, 1, 0x00
@@ -24,7 +24,7 @@ asmb:
 	# that could become a though one.
 	movdqu (%rdi),%xmm8	# load s into xmm8
 	movdqu (%rsi),%xmm9	# load t into xmm9
-	movdqu mask, %xmm10	# load mask to xmm10
+	movdqu zero16, %xmm10	# load mask to xmm10
 	mov $0, %r8		# we need this
 loop:
 
@@ -43,7 +43,7 @@ loop:
 				# if there is 0xFF in xmm12, we
 				# will have a 1 in r8				
 
-	cmpq %r9, mask8 		# check if there was something found
+	cmpq %r9, zero8 # check if there was something found
 	je loop			# continue if no \0 was found
 	ret 			# we're done here
 	
