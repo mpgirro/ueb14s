@@ -12,6 +12,9 @@ CONV	=
 SRCS	=	$(PROG).c $(PRJ).s
 OBJS	=	$(PROG).o $(PRJ).o
 
+$(PRJ).o: $(PRJ).s
+	$(CC) $(CFLAGS) -c $(PRJ).s
+
 all: $(PROG)
 
 $(PROG): $(OBJS)
@@ -19,9 +22,6 @@ $(PROG): $(OBJS)
 
 $(PROG).o: $(PROG).c
 	$(CC) $(CFLAGS) -c $(PROG).c
-
-$(PRJ).o: $(PRJ).s
-	$(CC) $(CFLAGS) -c $(PRJ).s
 
 clean:
 	-rm -f $(PROG) $(OBJS) *~ 
