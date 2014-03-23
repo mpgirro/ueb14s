@@ -12,7 +12,7 @@ Identifier bestehen aus Buchstaben, Ziffern, und _, dürfen aber nur mit Buchsta
 
 Zahlen sind entweder Hexadezimalzahlen oder Dezimalzahlen. Hexadezimalzahlen beginnen mit einer Dezimalziffer, gefolgt von null oder mehr Hexadezimalzifferm, gefolgt von H. Hex-Ziffern dürfen sowohl groß als auch klein geschrieben werden. Dezimalzahlen bestehen aus einer oder mehr Dezimalziffern.
 
-Leerzeichen, Tabs und Newlines zwischen den Lexemen sind erlaubt und werden ignoriert, ebenso Kommentare, die mit /* anfangen und bis zum nächsten */ gehen; Kommentare können also nicht geschachtelt werden.
+Leerzeichen, Tabs und Newlines zwischen den Lexemen sind erlaubt und werden ignoriert, ebenso Kommentare, die mit **/\*** anfangen und bis zum nächsten **\*/** gehen; Kommentare können also nicht geschachtelt werden.
 
 Alles Andere sind lexikalische Fehler.
 
