@@ -6,7 +6,7 @@ Abgabe spätestens am 2. April 2014, 14 Uhr.
 
 ## Angabe
 
-Schreiben Sie mit flex einen Scanner, der Identifier, Zahlen, und folgende Schlüsselwörter unterscheiden kann: **struct end func return with do let in cond then not or**. Weiters soll er auch noch folgende Lexeme erkennen: **: ( ) ; . - + * > <>**
+Schreiben Sie mit flex einen Scanner, der Identifier, Zahlen, und folgende Schlüsselwörter unterscheiden kann: **struct end func return with do let in cond then not or**. Weiters soll er auch noch folgende Lexeme erkennen: **: ( ) ; = . - + * > <>**
 
 Identifier bestehen aus Buchstaben, Ziffern, und _, dürfen aber nur mit Buchstaben beginnen.
 
