@@ -20,11 +20,13 @@ other		.
 
 %%
 
-{keyword|lexem}		handle_keyword(yytext);
+{keyword}		handle_keyword(yytext);
+{lexem}			handle_keyword(yytext);
 {identifier}		handle_identifier(yytext);
 {decnumber}		handle_decnumber(yytext);
 {hexnumber}		handle_hexnumber(yytext);
-{whitespace|comment}	handle_comment(yytext);
+{whitespace}		handle_comment(yytext);
+{comment}		handle_comment(yytext);
 {other}			handle_other(yytext,yylineno);
 
 %%
