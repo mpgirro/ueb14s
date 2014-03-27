@@ -15,7 +15,7 @@ identifier	[a-zA-Z]+[0-9a-zA-Z_]*
 decnumber	[0-9]+
 hexnumber	[0-9]+[0-9a-fA-F]*[H|h]
 whitespace	[ \t\n]
-comment		(\/\*).*(\*\/)
+comment		"/*"
 other		.
 
 %%
@@ -75,7 +75,28 @@ void handle_hexnumber(char *hexnumber)
 
 void handle_comment(char *comment)
 {
-	/* nothing to do here */
+	/* stole this from https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html */
+	register int c;
+
+	for ( ; ; )
+	{
+		/* eat up text of comment */
+		while ( (c = input()) != '*' && c != EOF );    
+
+		if ( c == '*' )
+		{
+			while ( (c = input()) == '*' ) ;
+                    	
+			if ( c == '/' )
+                        	break;    /* found the end */
+               	}
+
+                if ( c == EOF )
+                {
+                	error( "EOF in comment" );
+                	break;
+                }
+	}
 }
 
 void handle_other(char *other, int lineno)
