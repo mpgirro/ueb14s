@@ -38,7 +38,9 @@ int main(int argc, char **argv)
 	if( argc > 1)
 	{
 		yyin = fopen(argv[1],"r");
-	} else {
+	} 
+	else 
+	{
 		yyin = stdin;
 	}
 
@@ -87,19 +89,24 @@ void handle_comment(char *comment)
 	for ( ; ; )
 	{
 		/* eat up text of comment */
-		while ( (c = input()) != '*' && c != EOF );    
+		while ( (c = yyinput()) != '*' && c != EOF );    
 
+		/* so, lets check if the comment is truly over */
 		if ( c == '*' )
-		{
-			while ( (c = input()) == '*' ) ;
+		{	
+			/* eat up all the stars, in case there are more */
+			while ( (c = yyinput()) == '*' ) ;
                     	
+			/* check if comments is finally over */
 			if ( c == '/' )
                         	break;    /* found the end */
                	}
 
+		/* oh boy - this should never be happening */
                 if ( c == EOF )
                 {
-                	error( "EOF in comment" );
+			(void) fprintf(stderr, "EOF in comment");
+			exit(EXIT_FAILURE);	
                 	break;
                 }
 	}
