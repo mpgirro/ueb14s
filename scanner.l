@@ -6,7 +6,7 @@
 	void handle_decnumber(char *decnumber);
 	void handle_hexnumber(char *hexnumber);	
 	void handle_comment(char *comment);
-	void handle_other(char *other, int line);
+	void handle_other(char *other, int lineno);
 %}
 
 keyword		struct|end|func|return|with|do|let|in|cond|then|not|or
@@ -63,14 +63,14 @@ void handle_decnumber(char *decnumber)
 {
 	char *endptr;
 	/* print "num" followed by the number */
-	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( decnumber, &endptr, 10);  
+	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( decnumber, &endptr, 10));  
 }
 
 void handle_hexnumber(char *hexnumber)
 {
 	char *endptr;
 	/* print "num" followed hexnumber in decimal representation */
-	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( hexnumber, &endptr, 16);
+	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( hexnumber, &endptr, 16));
 }
 
 void handle_comment(char *comment)
@@ -78,8 +78,8 @@ void handle_comment(char *comment)
 	/* nothing to do here */
 }
 
-void handle_other(char *other)
+void handle_other(char *other, int lineno)
 {
-	(void) fprintf(stderr, "lexical error in line %d (invald character sequence: %d)\n", line, other);
+	(void) fprintf(stderr, "lexical error in line %d (invald character sequence: %d)\n", lineno, other);
 	exit(EXIT_FAILURE);
 }
