@@ -26,7 +26,7 @@ other		.
 {identifier}		handle_identifier(yytext);
 {decnumber}		handle_decnumber(yytext);
 {hexnumber}		handle_hexnumber(yytext);
-{whitespace}		handle_comment(yytext);
+{whitespace}		handle_whitespace(yytext);
 {comment}		handle_comment(yytext);
 {other}			handle_other(yytext,yylineno);
 
@@ -89,8 +89,7 @@ void handle_comment(char *comment)
 	for ( ; ; )
 	{
 		/* eat up text of comment */
-		/*while ( (c = input()) != '*' && c != EOF );*/
-		while( (c=input()) != '*' ) ;    
+		while ( (c = input()) != '*' && c != EOF );
 
 		/* so, lets check if the comment is truly over */
 		if ( c == '*' )
@@ -104,13 +103,12 @@ void handle_comment(char *comment)
                	}
 
 		/* oh boy - this should never be happening */
-		/*
                 if ( c == EOF )
                 {
 			(void) fprintf(stderr, "EOF in comment\n");
 			exit(EXIT_FAILURE);	
                 	break;
-                }*/
+                }
 	}
 }
 
