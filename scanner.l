@@ -89,7 +89,8 @@ void handle_comment(char *comment)
 	for ( ; ; )
 	{
 		/* eat up text of comment */
-		while ( (c = input()) != '*' && c != EOF );    
+		/*while ( (c = input()) != '*' && c != EOF );*/
+		while( (c=input()) != '*' ) ;    
 
 		/* so, lets check if the comment is truly over */
 		if ( c == '*' )
@@ -103,12 +104,13 @@ void handle_comment(char *comment)
                	}
 
 		/* oh boy - this should never be happening */
+		/*
                 if ( c == EOF )
                 {
-			(void) fprintf(stderr, "EOF in comment");
+			(void) fprintf(stderr, "EOF in comment\n");
 			exit(EXIT_FAILURE);	
                 	break;
-                }
+                }*/
 	}
 }
 
