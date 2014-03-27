@@ -15,7 +15,7 @@ identifier	[a-zA-Z]+[0-9a-zA-Z_]*
 decnumber	[0-9]+
 hexnumber	[0-9]+[0-9a-fA-F]*[H|h]
 whitespace	[ \t\n]
-comment		\/\*.*\*\/
+comment		"/*".*"*/"
 other		.
 
 %%
