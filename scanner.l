@@ -4,7 +4,8 @@
 	void handle_keyword(char *keyword);
 	void handle_identifier(char *identifier);
 	void handle_decnumber(char *decnumber);
-	void handle_hexnumber(char *hexnumber);	
+	void handle_hexnumber(char *hexnumber);
+	void handle_whitespace(char *whitespace);	
 	void handle_comment(char *comment);
 	void handle_other(char *other, int lineno);
 %}
@@ -71,6 +72,11 @@ void handle_hexnumber(char *hexnumber)
 	char *endptr;
 	/* print "num" followed hexnumber in decimal representation */
 	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( hexnumber, &endptr, 16));
+}
+
+void handle_whitespace(char *whitespace)
+{
+	/* nothing to do here */
 }
 
 void handle_comment(char *comment)
