@@ -1,7 +1,8 @@
-CC		= gcc
-FLEXF 		= lex.yy.c
-SCANNER 	= scanner
-OBJS		= $(SCANNER).o
+CC	= gcc
+FLEXF 	= lex.yy.c
+SCANNER = scanner
+OBJS	= $(SCANNER).o
+SRCS	= $(SCANNER).l
 
 .PHONY: all clean
 
@@ -19,4 +20,7 @@ flex: $(SCANNER).l
 scanner: flex
 	$(CC) -c $(FLEXF) -o $(OBJS)
 	$(CC) $(OBJS) -o $(SCANNER) -lfl
+	
+abgabe:
+	cp makefile $(SRCS) ~/abgabe/scanner/
 	
