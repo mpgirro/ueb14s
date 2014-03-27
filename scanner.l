@@ -17,3 +17,13 @@ whitespace	[ \t\n]
 comment		\/\*.*\*\/
 other		.
 
+%%
+
+{keyword|lexem}		handle_keyword(yytext);
+{identifier}		handle_identifier(yytext);
+{decnumber}		handle_number(yytext,10);
+{hexnumber}		handle_number(yytext,16);
+{whitespace|comment}	handle_comment(yytext);
+{other}			handle_other(yytext,yylineno);
+
+
