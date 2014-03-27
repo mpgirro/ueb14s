@@ -89,13 +89,13 @@ void handle_comment(char *comment)
 	for ( ; ; )
 	{
 		/* eat up text of comment */
-		while ( (c = yyinput()) != '*' && c != EOF );    
+		while ( (c = input()) != '*' && c != EOF );    
 
 		/* so, lets check if the comment is truly over */
 		if ( c == '*' )
 		{	
 			/* eat up all the stars, in case there are more */
-			while ( (c = yyinput()) == '*' ) ;
+			while ( (c = input()) == '*' ) ;
                     	
 			/* check if comments is finally over */
 			if ( c == '/' )
