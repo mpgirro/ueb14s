@@ -31,15 +31,17 @@ other		.
 
 int main(int argc, char **argv)
 {
-
+	/* decide whether to to read from file or from input stream */
 	if( argc > 1)
 	{
 		yyin = fopen(argv[1],"r");
-	} else
+	} else {
 		yyin = stdin;
 	}
 
 	yylex();
+
+	/* if we reached this, everything went well */
 	exit(EXIT_SUCCESS);
 }
 
@@ -57,7 +59,6 @@ void handle_identifier(char *identifier)
 
 void handle_decnumber(char *decnumber)
 {
-
 	char *endptr;
 	/* print "num" followed by the number */
 	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( decnumber, &endptr, 10);  
