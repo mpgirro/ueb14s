@@ -1,4 +1,4 @@
-% option yylineno
+%option yylineno
 
 %{
 	void handle_keyword(char *keyword);
