@@ -1,13 +1,13 @@
 %option yylineno
 
 %{
-	void handle_keyword(char *keyword);
-	void handle_identifier(char *identifier);
-	void handle_decnumber(char *decnumber);
-	void handle_hexnumber(char *hexnumber);
-	void handle_whitespace(char *whitespace);	
-	void handle_comment(char *comment);
-	void handle_other(char *other, int lineno);
+	void process_keyword(char *keyword);
+	void process_identifier(char *identifier);
+	void process_decnumber(char *decnumber);
+	void process_hexnumber(char *hexnumber);
+	void process_whitespace(char *whitespace);	
+	void process_comment(char *comment);
+	void process_other(char *other, int lineno);
 %}
 
 keyword		struct|end|func|return|with|do|let|in|cond|then|not|or
@@ -21,14 +21,14 @@ other		.
 
 %%
 
-{keyword}		handle_keyword(yytext);
-{lexem}			handle_keyword(yytext);
-{identifier}		handle_identifier(yytext);
-{decnumber}		handle_decnumber(yytext);
-{hexnumber}		handle_hexnumber(yytext);
-{whitespace}		handle_whitespace(yytext);
-{comment}		handle_comment(yytext);
-{other}			handle_other(yytext,yylineno);
+{keyword}		process_keyword(yytext);
+{lexem}			process_keyword(yytext);
+{identifier}		process_identifier(yytext);
+{decnumber}		process_decnumber(yytext);
+{hexnumber}		process_hexnumber(yytext);
+{whitespace}		process_whitespace(yytext);
+{comment}		process_comment(yytext);
+{other}			process_other(yytext,yylineno);
 
 %%
 
@@ -50,38 +50,38 @@ int main(int argc, char **argv)
 	exit(EXIT_SUCCESS);
 }
 
-void handle_keyword(char *keyword)
+void process_keyword(char *keyword)
 {
 	/* print only the lexem */
 	(void) fprintf(stdout, "%s\n", keyword);
 }
 
-void handle_identifier(char *identifier)
+void process_identifier(char *identifier)
 {
 	/* print "id" followed by the identifier */
 	(void) fprintf(stdout, "id %s\n", identifier); 
 }
 
-void handle_decnumber(char *decnumber)
+void process_decnumber(char *decnumber)
 {
 	char *endptr;
 	/* print "num" followed by the number */
 	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( decnumber, &endptr, 10));  
 }
 
-void handle_hexnumber(char *hexnumber)
+void process_hexnumber(char *hexnumber)
 {
 	char *endptr;
 	/* print "num" followed hexnumber in decimal representation */
 	(void) fprintf(stdout, "num %ld\n", (signed long) strtol( hexnumber, &endptr, 16));
 }
 
-void handle_whitespace(char *whitespace)
+void process_whitespace(char *whitespace)
 {
 	/* nothing to do here */
 }
 
-void handle_comment(char *comment)
+void process_comment(char *comment)
 {
 	/* stole this from https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html */
 	register int c;
@@ -112,7 +112,7 @@ void handle_comment(char *comment)
 	}
 }
 
-void handle_other(char *other, int lineno)
+void process_other(char *other, int lineno)
 {
 	(void) fprintf(stderr, "lexical error in line %d (invald character sequence: %d)\n", lineno, other);
 	exit(EXIT_FAILURE);
