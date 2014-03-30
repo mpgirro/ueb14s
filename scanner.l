@@ -2,6 +2,7 @@
 
 %{
 	void process_keyword(char *keyword);
+	void process_lexem(char *lexem);
 	void process_identifier(char *identifier);
 	void process_decnumber(char *decnumber);
 	void process_hexnumber(char *hexnumber);
@@ -52,8 +53,14 @@ int main(int argc, char **argv)
 
 void process_keyword(char *keyword)
 {
-	/* print only the lexem */
+	/* print only the keyword */
 	(void) fprintf(stdout, "%s\n", keyword);
+}
+
+void process_lexem(char *lexem)
+{
+	/* print only the lexem */
+	(void) fprintf(stdout, "%s\n", lexem);
 }
 
 void process_identifier(char *identifier)
