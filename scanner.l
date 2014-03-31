@@ -23,7 +23,7 @@ other		.
 %%
 
 {keyword}		process_keyword(yytext);
-{lexem}			process_keyword(yytext);
+{lexem}			process_lexem(yytext);
 {identifier}		process_identifier(yytext);
 {decnumber}		process_decnumber(yytext);
 {hexnumber}		process_hexnumber(yytext);
