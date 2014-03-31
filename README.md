@@ -14,13 +14,13 @@ Gegeben ist die Grammatik (in **yacc**/**bison**-artiger EBNF):
 	   		| Structdef
 			;
 	
-	Structdef: 	struct id ’:’ /* Strukturname */ 
-				{id} /* Felddefinition */
+	Structdef: 	struct id ’:’ 	/* Strukturname */ 
+				{id} 			/* Felddefinition */
 				end
 				;
 	
-	Funcdef: func id /* Funktionsname */
-			’(’ { id } ’)’ /* Parameterdefinition */
+	Funcdef: func id 		/* Funktionsname */
+			’(’ { id } ’)’ 	/* Parameterdefinition */
 			Stats end
 			;
 	
@@ -31,12 +31,12 @@ Gegeben ist die Grammatik (in **yacc**/**bison**-artiger EBNF):
 			| cond { Expr then Stats end ’;’ } end 
 			| let { id ’=’ Expr ’;’ } in Stats end
 			| with Expr ’:’ id do Stats end
-			| Lexpr ’=’ Expr /* Zuweisung */ 
+			| Lexpr ’=’ Expr 	/* Zuweisung */ 
 			| Term
 			;
 		
-	Lexpr: 	id /* Schreibender Variablenzugriff */ 
-			| Term ’.’ id /* Schreibender Feldzugriff */
+	Lexpr: 	id 				/* Schreibender Variablenzugriff */ 
+			| Term ’.’ id 	/* Schreibender Feldzugriff */
 			;
 	
 	Expr: 	{ not | ’-’ }  Term
@@ -48,9 +48,9 @@ Gegeben ist die Grammatik (in **yacc**/**bison**-artiger EBNF):
 		
 	Term: 	’(’ Expr ’)’
 	    	| num
-			| Term ’.’ id /* Lesender Feldzugriff */
-			| id /* Lesender Variablenzugriff */
-			| id ’(’ { Expr ’,’ } [ Expr ] ’)’ /* Funktionsaufruf */ 
+			| Term ’.’ id 	/* Lesender Feldzugriff */
+			| id			 /* Lesender Variablenzugriff */
+			| id ’(’ { Expr ’,’ } [ Expr ] ’)’ 	/* Funktionsaufruf */ 
 			;
 			
 Schreiben Sie einen Parser für diese Sprache mit **flex** und **yacc**/**bison**. Die Lexeme sind die gleichen wie im Scanner-Beispiel (**id** steht für einen Identifier, **num** für eine Zahl). Das Startsymbol ist **Program**.
