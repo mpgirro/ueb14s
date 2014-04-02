@@ -10,30 +10,30 @@ extern void lexerror(int);
 
 %option   yylineno
 
-identifier	[a-zA-Z]+[0-9a-zA-Z_]*
-decnumber	[0-9]+
-hexnumber	[0-9]+[0-9a-fA-F]*[H|h]
-whitespace	[ \t\n]
-comment		"/*"
-other		.
+IDENTIFIER	[a-zA-Z]+[0-9a-zA-Z_]*
+DECNUMBER	[0-9]+
+HEXNUMBER	[0-9]+[0-9a-fA-F]*[H|h]
+WHITESPACE	[ \t\n]
+COMMENT		"/*"
+OTHER		.
 
 %%
 
-{whitespace}	;
-{comment}		;
+{WHITESPACE}	;
+{COMMENT}		;
 
-struct		{ return struct; };
-end			{ return end; 	 };
-func		{ return func; 	 };
-return		{ return return; };
-with		{ return with;   };
-do			{ return do;     };
-let			{ return let;    };
-in			{ return in;     };
-cond		{ return cond;   };
-then		{ return then;   };
-not			{ return not;    };
-or			{ return or; 	 };
+struct		{ return STRUCT; };
+end			{ return END; 	 };
+func		{ return FUNC; 	 };
+return		{ return RETURN; };
+with		{ return WITH;   };
+do			{ return DO;     };
+let			{ return LET;    };
+in			{ return IN;     };
+cond		{ return COND;   };
+then		{ return THEN;   };
+not			{ return NOT;    };
+or			{ return OR; 	 };
 
 \:			{ return ':'; };
 \(			{ return '('; };
@@ -47,13 +47,13 @@ or			{ return or; 	 };
 \=			{ return '='; };
 \,			{ return ','; };
 
-<>			{ return notequal; };
+<>			{ return NOTEQUAL; };
 
-{decnumber}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return number; };
-{hexnumber}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return number; };
+{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return DECNUMBER; };
+{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return HEXNUMBER; };
 
-{identifier}			{ yylval.sval = strdup(yytext); return identifier; };
+{IDENTIFIER}			{ yylval.sval = strdup(yytext); return IDENTIFIER; };
 
-{other}					{ lexerror(yylineno); }
+{OTHER}					{ lexerror(yylineno); }
 
 %%
