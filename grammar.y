@@ -68,14 +68,14 @@ Expr: 	{ NOT | '-' }  Term
     	| Term { '+' Term }
     	| Term { '*' Term }
     	| Term { OR Term }
-    	| Term ( '>' | '<>' ) Term
+    	| Term '(' '>' | '<>' ')' Term
     	;
 	
 Term: 	'(' Expr ')'
     	| num
 		| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 		| IDENTIFIER			 /* Lesender Variablenzugriff */
-		| IDENTIFIER '(' { Expr ',' } [ Expr ] ')' 	/* Funktionsaufruf */ 
+		| IDENTIFIER '(' { Expr ',' } '[' Expr ']' ')' 	/* Funktionsaufruf */ 
 		;
 
 %%
