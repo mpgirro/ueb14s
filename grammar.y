@@ -32,50 +32,50 @@ extern void yyerror(const char*);
 
 %%
 
-Program: { Def ’;’ }
+Program: { Def ';' }
 ;
 
 Def: 	Funcdef
    		| Structdef
 		;
 
-Structdef: 	STRUCT IDENTIFIER ’:’ 	/* Strukturname */ 
+Structdef: 	STRUCT IDENTIFIER ':' 	/* Strukturname */ 
 			{IDENTIFIER} 			/* Felddefinition */
 			end
 			;
 
 Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
-		’(’ { IDENTIFIER } ’)’ 	/* Parameterdefinition */
+		'(' { IDENTIFIER } ')' 	/* Parameterdefinition */
 		Stats END
 		;
 
-Stats: { Stat ’;’ }
+Stats: { Stat ';' }
      	;
 	 
 Stat: 	RETURN Expr
-		| COND { Expr THEN Stats END ’;’ } END 
-		| LET { IDENTIFIER ’=’ Expr ’;’ } IN Stats END
-		| WITH Expr ’:’ IDENTIFIER DO Stats END
-		| Lexpr ’=’ Expr 	/* Zuweisung */ 
+		| COND { Expr THEN Stats END ';' } END 
+		| LET { IDENTIFIER '=' Expr ';' } IN Stats END
+		| WITH Expr ':' IDENTIFIER DO Stats END
+		| Lexpr '=' Expr 	/* Zuweisung */ 
 		| Term
 		;
 	
 Lexpr: 	IDENTIFIER 				/* Schreibender Variablenzugriff */ 
-		| Term ’.’ IDENTIFIER 	/* Schreibender Feldzugriff */
+		| Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 		;
 
-Expr: 	{ NOT | ’-’ }  Term
-    	| Term { ’+’ Term }
-    	| Term { ’*’ Term }
+Expr: 	{ NOT | '-' }  Term
+    	| Term { '+' Term }
+    	| Term { '*' Term }
     	| Term { OR Term }
-    	| Term ( ’>’ | ’<>’ ) Term
+    	| Term ( '>' | '<>' ) Term
     	;
 	
-Term: 	’(’ Expr ’)’
+Term: 	'(' Expr ')'
     	| num
-		| Term ’.’ IDENTIFIER 	 /* Lesender Feldzugriff */
+		| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 		| IDENTIFIER			 /* Lesender Variablenzugriff */
-		| IDENTIFIER ’(’ { Expr ’,’ } [ Expr ] ’)’ 	/* Funktionsaufruf */ 
+		| IDENTIFIER '(' { Expr ',' } [ Expr ] ')' 	/* Funktionsaufruf */ 
 		;
 
 %%
