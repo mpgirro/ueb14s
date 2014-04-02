@@ -3,16 +3,32 @@
 
 extern int yylex();
 extern int yyparse();
-
 extern void yyerror(const char*);
 
 %}
 
+%union {
+	char *sval;
+	signed long nval;
+}
 
-%token notequal
+%token STRUCT
+%token END
+%token FUNC
+%token RETURN
+%token WITH
+%token DO
+%token LET
+%token IN
+%token COND
+%token THEN
+%token NOT
+%token OR
 
-%token <nval> number
-%token <sval> identifier
+%token NOTEQUAL
+
+%token <nval> NUMBER
+%token <sval> IDENTIFIER
 
 %%
 
