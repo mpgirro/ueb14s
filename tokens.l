@@ -49,8 +49,8 @@ or			{ return OR; 	 };
 
 "<>"			{ return NOTEQUAL; };
 
-{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return DECNUMBER; };
-{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return HEXNUMBER; };
+{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return NUMBER; };
+{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return NUMBER; };
 
 {IDENTIFIER}			{ yylval.sval = strdup(yytext); return IDENTIFIER; };
 
