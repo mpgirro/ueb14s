@@ -39,43 +39,43 @@ Def: 	Funcdef
    		| Structdef
 		;
 
-Structdef: 	struct id ’:’ 	/* Strukturname */ 
-			{id} 			/* Felddefinition */
+Structdef: 	STRUCT IDENTIFIER ’:’ 	/* Strukturname */ 
+			{IDENTIFIER} 			/* Felddefinition */
 			end
 			;
 
-Funcdef: func id 		/* Funktionsname */
-		’(’ { id } ’)’ 	/* Parameterdefinition */
-		Stats end
+Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
+		’(’ { IDENTIFIER } ’)’ 	/* Parameterdefinition */
+		Stats END
 		;
 
 Stats: { Stat ’;’ }
      	;
 	 
-Stat: 	return Expr
-		| cond { Expr then Stats end ’;’ } end 
-		| let { id ’=’ Expr ’;’ } in Stats end
-		| with Expr ’:’ id do Stats end
+Stat: 	RETURN Expr
+		| COND { Expr THEN Stats END ’;’ } END 
+		| LET { IDENTIFIER ’=’ Expr ’;’ } IN Stats END
+		| WITH Expr ’:’ IDENTIFIER DO Stats END
 		| Lexpr ’=’ Expr 	/* Zuweisung */ 
 		| Term
 		;
 	
-Lexpr: 	id 				/* Schreibender Variablenzugriff */ 
-		| Term ’.’ id 	/* Schreibender Feldzugriff */
+Lexpr: 	IDENTIFIER 				/* Schreibender Variablenzugriff */ 
+		| Term ’.’ IDENTIFIER 	/* Schreibender Feldzugriff */
 		;
 
-Expr: 	{ not | ’-’ }  Term
+Expr: 	{ NOT | ’-’ }  Term
     	| Term { ’+’ Term }
     	| Term { ’*’ Term }
-    	| Term { or Term }
+    	| Term { OR Term }
     	| Term ( ’>’ | ’<>’ ) Term
     	;
 	
 Term: 	’(’ Expr ’)’
     	| num
-		| Term ’.’ id 	 /* Lesender Feldzugriff */
-		| id			 /* Lesender Variablenzugriff */
-		| id ’(’ { Expr ’,’ } [ Expr ] ’)’ 	/* Funktionsaufruf */ 
+		| Term ’.’ IDENTIFIER 	 /* Lesender Feldzugriff */
+		| IDENTIFIER			 /* Lesender Variablenzugriff */
+		| IDENTIFIER ’(’ { Expr ’,’ } [ Expr ] ’)’ 	/* Funktionsaufruf */ 
 		;
 
 %%
