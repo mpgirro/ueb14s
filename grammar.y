@@ -41,7 +41,7 @@ Def: 	Funcdef
 
 Structdef: 	STRUCT IDENTIFIER ':' 	/* Strukturname */ 
 			{IDENTIFIER} 			/* Felddefinition */
-			end
+			END
 			;
 
 Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
@@ -72,7 +72,7 @@ Expr: 	{ NOT | '-' }  Term
     	;
 	
 Term: 	'(' Expr ')'
-    	| num
+    	| NUMBER
 		| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 		| IDENTIFIER			 /* Lesender Variablenzugriff */
 		| IDENTIFIER '(' { Expr ',' } '[' Expr ']' ')' 	/* Funktionsaufruf */ 
