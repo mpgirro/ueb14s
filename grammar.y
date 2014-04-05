@@ -42,14 +42,18 @@ Program:
 Def: Funcdef
 	| Structdef
 	;
+	
+Idlist:	
+	| IDENTIFIER
+	;
 
 Structdef: STRUCT IDENTIFIER ':' 	/* Strukturname */ 
-	{IDENTIFIER} 					/* Felddefinition */
+	/*{IDENTIFIER}*/ Idlist					/* Felddefinition */
 	END
 	;
 
 Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
-	'(' { IDENTIFIER } ')' 		/* Parameterdefinition */
+	'(' /*{ IDENTIFIER }*/ Idlist ')' 		/* Parameterdefinition */
 	Stats END
 	;
 
