@@ -25,15 +25,19 @@ extern void yyerror(const char*);
 %token NOT
 %token OR
 
-%token NOTEQUAL
+%token NOTEQUAL		/* for <> */
 
 %token <nval> NUMBER
 %token <sval> IDENTIFIER
 
 %%
-
+/*
 Program: { Def ';' }
-;
+	;
+*/
+Program:
+	| Program Def ';'
+	; 
 
 Def: Funcdef
 	| Structdef
@@ -49,7 +53,9 @@ Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
 	Stats END
 	;
 
-Stats: { Stat ';' }
+/*Stats: { Stat ';' }*/
+Stats: 
+	| Stats ';' 
 	;
 	 
 Stat: RETURN Expr
