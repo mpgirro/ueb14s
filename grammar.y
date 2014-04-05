@@ -61,10 +61,18 @@ Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
 Stats: 
 	| Stats ';' 
 	;
+	
+Condlist: Expr THEN Stats END ';'
+	| Condlist Expr THEN Stats END ';'
+	;
+
+Letlist: IDENTIFIER '=' Expr ';'
+	| Letlist IDENTIFIER '=' Expr ';'
+	; 
 	 
 Stat: RETURN Expr
-	| COND { Expr THEN Stats END ';' } END 
-	| LET { IDENTIFIER '=' Expr ';' } IN Stats END
+	| COND /*{ Expr THEN Stats END ';' }*/ Condlist END 
+	| LET /*{ IDENTIFIER '=' Expr ';' }*/ Letlist IN Stats END
 	| WITH Expr ':' IDENTIFIER DO Stats END
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 	| Term
