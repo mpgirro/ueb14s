@@ -1,9 +1,20 @@
 
 %{
+	
+#include <stdio.h>
+#include <stdlib.h>
+
+#define LEXICAL_ERROR 	1
+#define SYNTAX_ERROR 	2
 
 extern int yylex();
 extern int yyparse();
-extern void yyerror(const char*);
+
+extern FILE* yyin;
+
+void yyerror(const char *msg);
+void lexerror(int);
+
 
 %}
 
@@ -119,3 +130,34 @@ Term: '(' Expr ')'
 	;
 
 %%
+
+int main(int argc, char **argv)
+{
+	/* decide whether to to read from file or from input stream */
+	if( argc > 1)
+	{
+		yyin = fopen(argv[1],"r");
+	} 
+	else 
+	{
+		yyin = stdin;
+	}
+
+	yyparse();
+
+	/* if we reached this, everything went well */
+	exit(EXIT_SUCCESS);
+}
+
+/* we overwrite this yacc/bison function to return the correct exit code */
+void yyerror(const char *msg)
+{
+	(void) fprintf(stderr, "%s\n", msg);
+	exit(SYNTAX_ERROR);
+}
+
+void lexerror(int line)
+{
+	(void) fprintf(stderr, "lexical error encountered in line %i\n", line);
+	exit(LEXICAL_ERROR);
+}
