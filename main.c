@@ -4,6 +4,10 @@
 #define LEXICAL_ERROR 	1
 #define SYNTAX_ERROR 	2
 
+extern int yyparse();
+
+extern FILE* yyin;
+
 void lexerror(int);
 void yyerror(const char*);
 void bailout(const char*, int);
