@@ -62,7 +62,7 @@ Stats:
 	| Stats ';' 
 	;
 	
-Condlist: Expr THEN Stats END ';'
+Condlist: /*Expr THEN Stats END ';'*/
 	| Condlist Expr THEN Stats END ';'
 	;
 
