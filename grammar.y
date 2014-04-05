@@ -73,11 +73,29 @@ Stat: RETURN Expr
 Lexpr: IDENTIFIER 			/* Schreibender Variablenzugriff */ 
 	Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	;
+	
+Notexpr: '-' Term
+	| NOT Term
+	| '-' Notexpr
+	| NOT Notexpr
+	;
+	
+Addexpr: Term '+' Term
+	| Addexpr '+' Term
+	;
+	
+Mulexpr: Term '*' Term
+	| Mulexpr '*' Term
+	;
+	
+Orexpr: Term OR Term
+	| Orexpr OR Term
+	;
 
-Expr: { NOT | '-' }  Term
-	| Term { '+' Term }
-	| Term { '*' Term }
-	| Term { OR Term }
+Expr: /*{ NOT | '-' }  Term*/ Notexpr
+	| /*Term { '+' Term }*/ Addexpr
+	| /*Term { '*' Term }*/Mulexpr
+	| /*Term { OR Term }*/ Orexpr
 	| Term '(' '>' | '<>' ')' Term
 	;
 	
