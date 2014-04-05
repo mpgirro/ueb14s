@@ -20,7 +20,7 @@ flex:
 	flex tokens.l
 	
 parser: bison flex
-	gcc main.c grammar.tab.c lex.yy.c -lfl -o parser
+	gcc grammar.tab.c lex.yy.c -lfl -o parser
 	
 abgabe:
 	cp makefile $(SRCS_FILES) ~/abgabe/parser/
