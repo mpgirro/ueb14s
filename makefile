@@ -2,6 +2,7 @@
 BISON_FILES = grammar.tab.h grammar.tab.c
 FLEX_FILES = lex.yy.c
 OBJECT_FILES = scanner.o
+SRCS_FILES = main.c tokens.l grammar.y
 
 .PHONY: all clean
 
@@ -20,4 +21,7 @@ flex:
 	
 parser: bison flex
 	gcc main.c grammar.tab.c lex.yy.c -lfl -o parser
+	
+abgabe:
+	cp makefile $(SRCS_FILES) ~/abgabe/parser/
 	
