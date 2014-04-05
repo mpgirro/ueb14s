@@ -92,13 +92,17 @@ Orexpr: Term OR Term
 	| Orexpr OR Term
 	;
 
-Expr: /*{ NOT | '-' }  Term*/ Notexpr
-	| /*Term { '+' Term }*/ Addexpr
-	| /*Term { '*' Term }*/Mulexpr
-	| /*Term { OR Term }*/ Orexpr
+Expr: /*{ NOT | '-' }  Term*/	Notexpr
+	| /*Term { '+' Term }*/		Addexpr
+	| /*Term { '*' Term }*/		Mulexpr
+	| /*Term { OR Term }*/		Orexpr
 	| Term '(' '>' | '<>' ')' Term
 	;
 	
+Exprlist: Expr
+	| Exprlist ',' Expr
+	; 
+		
 Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
