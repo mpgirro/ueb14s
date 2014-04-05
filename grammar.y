@@ -107,7 +107,7 @@ Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 	| IDENTIFIER			 /* Lesender Variablenzugriff */
-	| IDENTIFIER '(' { Expr ',' } '[' Expr ']' ')' 	/* Funktionsaufruf */ 
+	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist '[' Expr ']' ')' 	/* Funktionsaufruf */ 
 	;
 
 %%
