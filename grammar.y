@@ -88,7 +88,7 @@ Stat: RETURN Expr
 	| LET /*{ IDENTIFIER '=' Expr ';' }*/ Letlist IN Stats END
 	| WITH Expr ':' IDENTIFIER DO Stats END
 	| Assignment
-/	| Lexpr '=' Expr 	/* Zuweisung */ 
+	| Lexpr '=' Expr 	/* Zuweisung */ 
 	| Term
 	;
 	
