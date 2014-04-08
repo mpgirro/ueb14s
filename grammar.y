@@ -46,7 +46,7 @@ void lexerror(int);
 Program: { Def ';' }
 	;
 */
-Program:
+Program: /* empty */
 	| Program Def ';'
 	; 
 
@@ -54,7 +54,7 @@ Def: Funcdef
 	| Structdef
 	;
 	
-Idlist:	
+Idlist:	/* empty */
 	| Idlist IDENTIFIER
 	;
 
@@ -69,15 +69,17 @@ Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
 	;
 
 /*Stats: { Stat ';' }*/
-Stats: 
+Stats: /* empty */
 	| Stats Stat ';' 
 	;
 	
-Condlist:  
+/*{ Expr THEN Stats END ';' }*/
+Condlist:  /* empty */ 
 	| Condlist Expr THEN Stats END ';'
 	;
 
-Letlist: 
+/*{ IDENTIFIER '=' Expr ';' }*/
+Letlist:  /* empty */
 	| Letlist IDENTIFIER '=' Expr ';'
 	; 
 	 
@@ -93,31 +95,31 @@ Lexpr: IDENTIFIER 			/* Schreibender Variablenzugriff */
 	Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	;
 	
-Notexpr: 
+Notexpr: /* empty */
 	| '-' Notexpr
 	| NOT Notexpr
 	;
 	
-Addexpr: Term '+' Term
+Addexpr: /* empty */
 	| Addexpr '+' Term
 	;
 	
-Mulexpr: Term '*' Term
+Mulexpr: /* empty */
 	| Mulexpr '*' Term
 	;
 	
-Orexpr: Term OR Term
+Orexpr: /* empty */
 	| Orexpr OR Term
 	;
 
-Expr: Notexpr  Term
-	| /*Term { '+' Term }*/		Addexpr
-	| /*Term { '*' Term }*/		Mulexpr
-	| /*Term { OR Term }*/		Orexpr
+Expr: Notexpr /*{ NOT | '-' }*/  Term
+	| Term /* { '+' Term }*/	Addexpr
+	| Term /* { '*' Term }*/	Mulexpr
+	| Term /* { OR Term }*/		Orexpr
 	| Term '(' '>' | '<>' ')' Term
 	;
 	
-Exprlist: 
+Exprlist: /* empty */
 	| Exprlist Expr ','
 	; 
 		
