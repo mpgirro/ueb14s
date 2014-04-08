@@ -73,12 +73,12 @@ Stats:
 	| Stat ';' 
 	;
 	
-Condlist:  Expr THEN Stats END ';'
-	| Condlist Expr THEN Stats END ';'
+Condlist:  
+	| Expr THEN Stats END ';'
 	;
 
-Letlist: IDENTIFIER '=' Expr ';'
-	| Letlist IDENTIFIER '=' Expr ';'
+Letlist: 
+	| IDENTIFIER '=' Expr ';'
 	; 
 	 
 Stat: RETURN Expr
