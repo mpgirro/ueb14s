@@ -99,11 +99,10 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	/*| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
 	;
 	
-Notexpr: ( '-' | NOT ) Term
-/*	| NOT Term
+Notexpr: '-' Term
+	| NOT Term
 	| '-' Notexpr
-	| NOT Notexpr */
-	| ( '-' | NOT ) Notexpr
+	| NOT Notexpr 
 	;
 	
 Addexpr: Term '+' Term
@@ -122,7 +121,8 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| /* Term /* { '+' Term }*/		Addexpr
 	| /* Term /* { '*' Term }*/		Mulexpr
 	| /* Term /* { OR Term }*/		Orexpr
-	| Term ( '>' | '<>' ) Term
+	| Term '>' Term
+	| Term '<>' Term
 	| Term
 	;
 	
