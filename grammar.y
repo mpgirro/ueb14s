@@ -118,8 +118,8 @@ Expr: /*{ NOT | '-' }  Term*/	Notexpr
 	| Term '(' '>' | '<>' ')' Term
 	;
 	
-Exprlist: Expr
-	| Exprlist ',' Expr
+Exprlist: 
+	| Exprlist Expr ','
 	; 
 		
 Term: '(' Expr ')'
