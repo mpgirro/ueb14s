@@ -88,7 +88,7 @@ Stat: RETURN Expr
 	| LET /*{ IDENTIFIER '=' Expr ';' }*/ Letlist IN Stats END
 	| WITH Expr ':' IDENTIFIER DO Stats END
 	| Assignment
-/*	| Lexpr '=' Expr 	/* Zuweisung */ 
+/	| Lexpr '=' Expr 	/* Zuweisung */ 
 	| Term
 	;
 	
@@ -99,10 +99,11 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	/*| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
 	;
 	
-Notexpr: '-' Term
-	| NOT Term
+Notexpr: ( '-' | NOT ) Term
+/*	| NOT Term
 	| '-' Notexpr
-	| NOT Notexpr
+	| NOT Notexpr */
+	| ( '-' | NOT ) Notexpr
 	;
 	
 Addexpr: Term '+' Term
@@ -121,7 +122,7 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| /* Term /* { '+' Term }*/		Addexpr
 	| /* Term /* { '*' Term }*/		Mulexpr
 	| /* Term /* { OR Term }*/		Orexpr
-	| Term '(' '>' | '<>' ')' Term
+	| Term ( '>' | '<>' ) Term
 	| Term
 	;
 	
