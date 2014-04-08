@@ -125,7 +125,7 @@ Exprlist: Expr
 Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
-/*	| IDENTIFIER			 /* Lesender Variablenzugriff */
+	| IDENTIFIER			 /* Lesender Variablenzugriff */
 	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist '[' Expr ']' ')' 	/* Funktionsaufruf */ 
 	;
 
