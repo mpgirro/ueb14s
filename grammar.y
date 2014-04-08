@@ -92,42 +92,49 @@ Stat: RETURN Expr
 	;
 	
 Lexpr: IDENTIFIER 			/* Schreibender Variablenzugriff */ 
-	Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
+	| Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	;
 	
-Notexpr: /* empty */
+Notexpr: '-' Term
+	| NOT Term
 	| '-' Notexpr
 	| NOT Notexpr
 	;
 	
-Addexpr: /* empty */
+Addexpr: Term '+' Term
 	| Addexpr '+' Term
 	;
 	
-Mulexpr: /* empty */
+Mulexpr: Term '*' Term
 	| Mulexpr '*' Term
 	;
 	
-Orexpr: /* empty */
+Orexpr: Term OR Term
 	| Orexpr OR Term
 	;
 
-Expr: Notexpr /*{ NOT | '-' }*/  Term
-	| Term /* { '+' Term }*/	Addexpr
-	| Term /* { '*' Term }*/	Mulexpr
-	| Term /* { OR Term }*/		Orexpr
+Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
+	| /* Term /* { '+' Term }*/		Addexpr
+	| /* Term /* { '*' Term }*/		Mulexpr
+	| /* Term /* { OR Term }*/		Orexpr
 	| Term '(' '>' | '<>' ')' Term
+	| Term
 	;
 	
 Exprlist: /* empty */
 	| Exprlist Expr ','
+	; 
+	
+Arg: /* empty */
+	| Expr
 	; 
 		
 Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 	| IDENTIFIER			 /* Lesender Variablenzugriff */
-	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist '[' Expr ']' ')' 	/* Funktionsaufruf */ 
+	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste  */
+	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist Arg ')' 	/* Funktionsaufruf */ 
 	;
 
 %%
