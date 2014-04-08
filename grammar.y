@@ -133,7 +133,7 @@ Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 	| IDENTIFIER			 /* Lesender Variablenzugriff */
-	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste  */
+/*	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste  */
 	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist Arg ')' 	/* Funktionsaufruf */ 
 	;
 
