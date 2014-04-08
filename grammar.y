@@ -80,19 +80,23 @@ Condlist:  /* empty */
 
 /*{ IDENTIFIER '=' Expr ';' }*/
 Letlist:  /* empty */
-	| Letlist IDENTIFIER '=' Expr ';'
+	| Letlist Assignment
 	; 
 	 
 Stat: RETURN Expr
 	| COND /*{ Expr THEN Stats END ';' }*/ Condlist END 
 	| LET /*{ IDENTIFIER '=' Expr ';' }*/ Letlist IN Stats END
 	| WITH Expr ':' IDENTIFIER DO Stats END
+	| Assignment
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 	| Term
 	;
 	
-Lexpr: IDENTIFIER 			/* Schreibender Variablenzugriff */ 
-	| Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
+/* this is new */
+Assignment: IDENTIFIER '=' Expr ';'
+	
+Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */ 
+	/*| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
 	;
 	
 Notexpr: '-' Term
