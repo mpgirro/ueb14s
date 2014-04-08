@@ -70,7 +70,7 @@ Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
 
 /*Stats: { Stat ';' }*/
 Stats: 
-	| Stats ';' 
+	| Stat ';' 
 	;
 	
 Condlist:  Expr THEN Stats END ';'
