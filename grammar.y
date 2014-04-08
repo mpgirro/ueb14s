@@ -93,8 +93,7 @@ Lexpr: IDENTIFIER 			/* Schreibender Variablenzugriff */
 	Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */
 	;
 	
-Notexpr: '-' Term
-	| NOT Term
+Notexpr: 
 	| '-' Notexpr
 	| NOT Notexpr
 	;
@@ -111,7 +110,7 @@ Orexpr: Term OR Term
 	| Orexpr OR Term
 	;
 
-Expr: /*{ NOT | '-' }  Term*/	Notexpr
+Expr: Notexpr  Term
 	| /*Term { '+' Term }*/		Addexpr
 	| /*Term { '*' Term }*/		Mulexpr
 	| /*Term { OR Term }*/		Orexpr
