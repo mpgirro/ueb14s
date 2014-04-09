@@ -77,14 +77,14 @@ void process_comment(char *comment)
                     	
 			/* check if comments is finally over */
 			if ( c == '/' )
-                        	break;    /* found the end */
-               	}
+				break;    /* found the end */
+        }
 
 		/* oh boy - this should never be happening */
-                if ( c == EOF )
-                {
-					lexerror(yylineno);
-                	break;
-                }
+        if ( c == EOF )
+        {
+			lexerror(yylineno);
+            break;
+        }
 	}
 }
