@@ -44,6 +44,11 @@ func s(a b)
 	(a);
 	((a > 3) <> (1 *2));
 
+	a1 = 3 + 3 + 3 + 3 + 3;
+	a2 = 3 * 2* 1* 0;
+	a3 = a or b or c or d;
+	a4 = (not not not --- not not a) * (3 + 2 + (3 or 2 or 1));
+
 
 	bleeding.bad = (a);
 	bleeding.dead = ((a > 3) <> (1 *2));
