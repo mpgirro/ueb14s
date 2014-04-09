@@ -96,7 +96,7 @@ Stat: RETURN Expr
 Assignment: IDENTIFIER '=' Expr ';'
 	
 Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */ 
-	/*| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
+	| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
 	;
 	
 Notexpr: '-' Term
