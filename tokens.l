@@ -5,6 +5,7 @@
 #include "grammar.tab.h"
 
 extern void lexerror(int);
+void process_comment(char *comment);
 
 %}
 
@@ -20,7 +21,7 @@ OTHER		.
 %%
 
 {WHITESPACE}	;
-{COMMENT}		;
+{COMMENT}		process_comment(yytext);
 
 struct		{ return STRUCT; };
 end			{ return END; 	 };
@@ -57,3 +58,33 @@ or			{ return OR; 	 };
 {OTHER}					{ lexerror(yylineno); }
 
 %%
+
+void process_comment(char *comment)
+{
+	/* stole this from https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html */
+	register int c;
+
+	for ( ; ; )
+	{
+		/* eat up text of comment */
+		while ( (c = input()) != '*' && c != EOF );
+
+		/* so, lets check if the comment is truly over */
+		if ( c == '*' )
+		{	
+			/* eat up all the stars, in case there are more */
+			while ( (c = input()) == '*' ) ;
+                    	
+			/* check if comments is finally over */
+			if ( c == '/' )
+                        	break;    /* found the end */
+               	}
+
+		/* oh boy - this should never be happening */
+                if ( c == EOF )
+                {
+					lexerror(yylineno);
+                	break;
+                }
+	}
+}
