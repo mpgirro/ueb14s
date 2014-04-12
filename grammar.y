@@ -122,7 +122,7 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| /* Term /* { '*' Term }*/		Mulexpr
 	| /* Term /* { OR Term }*/		Orexpr
 	| Term '>' Term
-	| Term '<>' Term
+	| Term NOTEQUAL Term /* Term <> Term */
 	| Term
 	;
 	
