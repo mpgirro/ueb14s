@@ -1,19 +1,74 @@
 
 %{
 	
+/* === librarys === */
+	
 #include <stdio.h>
 #include <stdlib.h>
 
+/* === constants === */
+
 #define LEXICAL_ERROR 	1
 #define SYNTAX_ERROR 	2
+#define OTHER_ERROR		3 	/* use of non visible name, etc. */
+
+
+/* === enums === */
+
+enum nodetype {
+	TYPE_PROG
+};
+
+/* === structs === */
+
+/*
+struct ast_node{
+	char *id;
+	int val;
+	enum nodetype type;
+	struct ast_node *left;
+	struct ast_node *right;
+};*/
+
+struct symboltable_entry{
+	char *name;
+	int type
+	struct symboltable_entry *next;
+} symtabentry;
+
+struct symboltable{
+	symtabentry *first;
+	symtabentry *last;
+} symtab;
+
+/* === function signatures === */
 
 extern int yylex();
 extern int yyparse();
 
+/* error handling functions */
+void lexerror(int);
+void yyerror(const char *msg);
+void othererror(void);
+
+/* symbol table maintainance */
+symtab *symtab_init(void);
+symtab *symtab_add(symtab *tab, char *name, int type);
+symtab *symtab_dup(symtab *src, symtab *dest);
+
+symtabentry *stentry_init(void);
+symtabentry *stentry_append(symtab *tab, symtabentry *entry);
+symtabentry *stentry_dup(symtabentry *entry);
+symtabentry *stentry_find(symtab *tab, char *name);
+
+
+
+
+
+/* === global variables === */
+
 extern FILE* yyin;
 
-void yyerror(const char *msg);
-void lexerror(int);
 
 
 %}
@@ -41,7 +96,14 @@ void lexerror(int);
 %token <nval> NUMBER
 %token <sval> IDENTIFIER
 
+%start start
+
+@attributes { int val; 	} 	NUMBER
+@attributes { char *id; }	IDENTIFIER	
+
+
 %%
+
 /*
 Program: { Def ';' }
 	;
@@ -124,6 +186,9 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| Term '>' Term
 	| Term NOTEQUAL Term /* Term <> Term */
 	| Term
+		@{
+			@i @term.0.st@ =@expr.0.st@;
+		@}
 	;
 	
 Exprlist: /* empty */
@@ -174,3 +239,89 @@ void lexerror(int line)
 	(void) fprintf(stderr, "lexical error encountered in line %i\n", line);
 	exit(LEXICAL_ERROR);
 }
+
+symtab *symtab_init(void)
+{
+	symtable *tab = malloc(sizeof(symtable));
+	tab->first = NULL;
+	tab->last = NULL;
+	return tab;
+}
+
+symtab *symtab_add(symtab *tab, char *name, int type)
+{
+	symtabentry *entry = stentry_init();
+	entry->name = strdup(name);
+	entry->type = type;
+	entry->next = NULL;
+	stentry_append(tab, entry);
+	return tab;
+}
+
+/* make an exact duplicate (copy) of symbol table src into dest */
+symtab *symtab_dup(symtab *src, symtab *dest)
+{
+	symtabentry *entry;
+	symtabentry *copy;
+	if(src->first != NULL) {
+		entry = src->first;
+		while(entry != NULL) {
+			copy = stentry_dup(entry);
+			if(dest->first == NULL) {
+				dest->first = copy;
+				dest->last 	= copy;
+			} else {
+				dest->last->next = copy;
+				dest->last = copy;
+			}
+			entry = entry->next;
+		}
+	}
+	return dest;
+}
+
+symtabentry *stentry_init(void)
+{
+	symtabentry *entry = malloc(sizeof(symtabentry));
+	entry->next = NULL;
+	return entry;
+}
+
+/* append a entry to the symbol table at the first position */
+symtabentry *stentry_append(symtab *tab, symtabentry *entry)
+{
+	if(tab->first == NULL) {
+		tab->first = entry;
+		tab->last = entry;
+	} else {
+		entry->next = tab->first;
+		tab->first = entry;
+	}
+	return entry;
+}
+
+/* duplicate a symbol table entry, returns an exact copy */
+symtabentry *stentry_dup(symtabentry *entry)
+{
+	symtabentry *dup = stentry_init();
+	dup->type = entry->type;
+	dup->name = strdup(entry->name);
+	dup->next = NULL;
+	return dup;
+}
+
+symtabentry *stentry_find(symtab *tab, char *name)
+{
+	symtabentry *match = NULL;
+	symtabentry *cursor = tab->first;
+	while(cursor != NULL) {
+		if(strcmp(name, cursor->name) == 0) {
+			match = cursor;
+			break;
+		}
+		cursor = cursor->next;
+	}
+	return match;
+}
+
+
