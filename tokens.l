@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "grammar.tab.h"
+#include "oxout.tab.h"
 
 extern void lexerror(int);
 void process_comment(char *comment);
@@ -21,41 +22,41 @@ OTHER		.
 %%
 
 {WHITESPACE}	;
-{COMMENT}		process_comment(yytext);
+{COMMENT}	process_comment(yytext);
 
 struct		{ return STRUCT; };
-end			{ return END; 	 };
+end		{ return END; 	 };
 func		{ return FUNC; 	 };
 return		{ return RETURN; };
 with		{ return WITH;   };
-do			{ return DO;     };
-let			{ return LET;    };
-in			{ return IN;     };
+do		{ return DO;     };
+let		{ return LET;    };
+in		{ return IN;     };
 cond		{ return COND;   };
 then		{ return THEN;   };
-not			{ return NOT;    };
-or			{ return OR; 	 };
+not		{ return NOT;    };
+or		{ return OR; 	 };
 
-\:			{ return ':'; };
-\(			{ return '('; };
-\)			{ return ')'; };
-\;			{ return ';'; };
-\.			{ return '.'; };
-\-			{ return '-'; };
-\+			{ return '+'; };
-\*			{ return '*'; };
-\>			{ return '>'; };
-\=			{ return '='; };
-\,			{ return ','; };
+\:		{ return ':'; };
+\(		{ return '('; };
+\)		{ return ')'; };
+\;		{ return ';'; };
+\.		{ return '.'; };
+\-		{ return '-'; };
+\+		{ return '+'; };
+\*		{ return '*'; };
+\>		{ return '>'; };
+\=		{ return '='; };
+\,		{ return ','; };
 
-"<>"			{ return NOTEQUAL; };
+"<>"		{ return NOTEQUAL; };
 
-{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return NUMBER; };
-{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return NUMBER; };
+{DECNUMBER}	{ return NUMBER; @{ @NUMBER.val@ = (signed long) strtol( yytext, NULL, 10); @} };
+{HEXNUMBER}	{ return NUMBER; @{ @NUMBER.val@ = (signed long) strtol( yytext, NULL, 16); @} };
 
-{IDENTIFIER}			{ yylval.sval = strdup(yytext); return IDENTIFIER; };
+{IDENTIFIER}	{ return IDENTIFIER; @{ @IDENTIFIER.name@ = strdup(yytext); @} };
 
-{OTHER}					{ lexerror(yylineno); }
+{OTHER}		{ lexerror(yylineno); }
 
 %%
 
