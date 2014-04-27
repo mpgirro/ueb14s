@@ -24,16 +24,16 @@ OTHER		.
 {WHITESPACE}	;
 {COMMENT}	process_comment(yytext);
 
-struct		{ return STRUCT; };
+struct	{ return STRUCT; };
 end		{ return END; 	 };
-func		{ return FUNC; 	 };
-return		{ return RETURN; };
-with		{ return WITH;   };
+func	{ return FUNC; 	 };
+return	{ return RETURN; };
+with	{ return WITH;   };
 do		{ return DO;     };
 let		{ return LET;    };
 in		{ return IN;     };
-cond		{ return COND;   };
-then		{ return THEN;   };
+cond	{ return COND;   };
+then	{ return THEN;   };
 not		{ return NOT;    };
 or		{ return OR; 	 };
 

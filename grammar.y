@@ -53,8 +53,9 @@ void othererror(void);
 
 /* symbol table maintainance */
 symtab *symtab_init(void);
-symtab *symtab_add(symtab *tab, char *name, int type);
+symtab *symtab_add(symtab *tab, char *name);
 symtab *symtab_dup(symtab *src, symtab *dest);
+void symtab_contains(symtab *tab, char *name);
 
 symtabentry *stentry_init(void);
 symtabentry *stentry_append(symtab *tab, symtabentry *entry);
@@ -98,9 +99,22 @@ extern FILE* yyin;
 
 %start start
 
-@attributes { int val; 	} 	NUMBER
-@attributes { char *id; }	IDENTIFIER	
+/* attributes for terminals */
+@attributes { int val; } 							NUMBER
+@attributes { char *name; } 						IDENTIFIER
+	
+/* attributes for nonterminals */
+@attributes { char *name; } 						Funcdef
+@attributes { char *name; } 						Structdef
+@attributes { char *name; } 						Fielddef
+@attributes { char *name; } 						Vardef
 
+@attributes { symtab *stab; } 						Stats
+@attributes { symtab *stab; } 						paramdef
+@attributes { symtab *stab; } 						paramlist
+	
+/* this is to fill the symbol tables - maybe this is not even necessary? */
+@traversal @lefttoright @preorder pre
 
 %%
 
@@ -116,18 +130,42 @@ Def: Funcdef
 	| Structdef
 	;
 	
-Idlist:	/* empty */
-	| Idlist IDENTIFIER
+paramdef:
+		@{
+			/* empty symbol table */
+			@i @paramdef.0.stab@ = symtab_init();
+		@}
+	| paramlist
+		@{
+			/* propagate param symtab up the tree */
+			@i @paramdef.0.stab@ = @paramlist.0.stab@;
+		@}
 	;
 
-Structdef: STRUCT IDENTIFIER ':' 	/* Strukturname */ 
-	/*{IDENTIFIER}*/ Idlist					/* Felddefinition */
-	END
+/* this one is new - we need the distinction to init a symtab */	
+paramlist: IDENTIFIER
+		@{
+			/* this is the first param - create new symtab */
+			@i @paramlist.0.stab@ = symtab_init();
+			@pre symtab_contains( @paramlist.0.stab@, @IDENTIFIER.name@);
+			@pre symtab_add( @paramlist.0.stab@, @IDENTIFIER.name@);
+		@}
+	| paramlist IDENTIFIER
+		@{
+			/* paramlist.1 hast the symtab from the parameters -> get it up the tree */
+			@i @paramlist.0.stab@ = @paramlist.1.stab@;
+			@pre symtab_contains( @paramlist.1.stab@, @IDENTIFIER.name@);
+			@pre symtab_add( @paramlist.1.stab@, @IDENTIFIER.name@);
+		@}
+	;
+		
+Structdef: STRUCT IDENTIFIER ':' paramdef	END
 	;
 
-Funcdef: FUNC IDENTIFIER 		/* Funktionsname */
-	'(' /*{ IDENTIFIER }*/ Idlist ')' 		/* Parameterdefinition */
-	Stats END
+Funcdef: FUNC IDENTIFIER '(' paramdef ')' Stats END
+		@{ 
+			@i @Stats.stab@ = @paramdef.stab@;
+		@}
 	;
 
 /*Stats: { Stat ';' }*/
@@ -187,7 +225,7 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| Term NOTEQUAL Term /* Term <> Term */
 	| Term
 		@{
-			@i @term.0.st@ =@expr.0.st@;
+			@i @term.0.stab@ = @expr.0.stab@;
 		@}
 	;
 	
@@ -248,11 +286,11 @@ symtab *symtab_init(void)
 	return tab;
 }
 
-symtab *symtab_add(symtab *tab, char *name, int type)
+symtab *symtab_add(symtab *tab, char *name)
 {
 	symtabentry *entry = stentry_init();
 	entry->name = strdup(name);
-	entry->type = type;
+	/*entry->type = type;*/
 	entry->next = NULL;
 	stentry_append(tab, entry);
 	return tab;
@@ -278,6 +316,15 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 		}
 	}
 	return dest;
+}
+
+void void symtab_contains(symtab *tab, char *name)
+{
+	symtabentry *entry = stentry_find(tab, name);
+	if(entry != NULL) {
+		(void) fprintf(stderr, "duplicate names found: %s\n", name);
+		othererror();
+	}
 }
 
 symtabentry *stentry_init(void)
