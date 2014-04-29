@@ -14,11 +14,12 @@
 
 
 /* === enums === */
-
-enum nodetype {
-	TYPE_PROG
+/*
+enum namespace {
+	ns_struct,
+	ns_field
 };
-
+*/
 /* === structs === */
 
 /*
@@ -32,8 +33,12 @@ struct ast_node{
 
 struct symboltable_entry{
 	char *name;
-	int type
 	struct symboltable_entry *next;
+	
+	/* 1: [vartab] this will be NULL
+	 * 2: [fieldtab] it will reference the struct entry it belongs to
+	 * 4: [structtab]: NULL as well */
+	struct symboltable_entry *ref;
 } symtabentry;
 
 struct symboltable{
@@ -62,15 +67,9 @@ symtabentry *stentry_append(symtab *tab, symtabentry *entry);
 symtabentry *stentry_dup(symtabentry *entry);
 symtabentry *stentry_find(symtab *tab, char *name);
 
-
-
-
-
 /* === global variables === */
 
 extern FILE* yyin;
-
-
 
 %}
 
@@ -102,16 +101,17 @@ extern FILE* yyin;
 /* attributes for terminals */
 @attributes { int val; } 							NUMBER
 @attributes { char *name; } 						IDENTIFIER
-	
-/* attributes for nonterminals */
-@attributes { char *name; } 						Funcdef
-@attributes { char *name; } 						Structdef
-@attributes { char *name; } 						Fielddef
-@attributes { char *name; } 						Vardef
 
-@attributes { symtab *stab; } 						Stats
-@attributes { symtab *stab; } 						paramdef
-@attributes { symtab *stab; } 						paramlist
+@attributes { symtab *structtab } 						Program
+@attributes { symtab *vartab; symtab *structtab } 		Funcdef
+@attributes { symtab *vartab; symtab *structtab } 		Stats
+@attributes { symtab *vartab; symtab *structtab } 		Stat
+	
+@attributes { symtab *vartab; } 						Stats
+@attributes { symtab *vartab; } 						paramdef
+@attributes { symtab *vartab; } 						paramlist
+@attributes { symtab *vartab; } 						letdef
+@attributes { symtab *vartab; } 						letlist
 	
 /* this is to fill the symbol tables - maybe this is not even necessary? */
 @traversal @lefttoright @preorder pre
@@ -123,22 +123,40 @@ Program: { Def ';' }
 	;
 */
 Program: /* empty */
+		@{
+			/* empty struct symbol table */
+			@i @Program.0.structtab@ = symtab_init();
+		@}
 	| Program Def ';'
+		@{
+			/* the structtab got initialised by an empty program
+			 * propagate it to the parent program and the definitions now */
+			@i @Program.0.structtab@ = @Program.1.structtab@;
+			@i @Def.0.structtab@ = @Program.1.structtab@;
+		@}
 	; 
 
 Def: Funcdef
+		@{
+			/* propagate the struct table to the every function def */
+			@i @Funcdef.0.structtab@ = @Def.0.structtab@;
+		@}
 	| Structdef
+		@{
+			/* propagate the struct table to the every struct def */
+			@i @Structdef.0.structtab@ = @Def.0.structtab@;
+		@}
 	;
 	
 paramdef:
 		@{
 			/* empty symbol table */
-			@i @paramdef.0.stab@ = symtab_init();
+			@i @paramdef.0.vartab@ = symtab_init();
 		@}
 	| paramlist
 		@{
 			/* propagate param symtab up the tree */
-			@i @paramdef.0.stab@ = @paramlist.0.stab@;
+			@i @paramdef.0.vartab@ = @paramlist.0.vartab@;
 		@}
 	;
 
@@ -146,25 +164,36 @@ paramdef:
 paramlist: IDENTIFIER
 		@{
 			/* this is the first param - create new symtab */
-			@i @paramlist.0.stab@ = symtab_init();
-			@pre symtab_contains( @paramlist.0.stab@, @IDENTIFIER.name@);
-			@pre symtab_add( @paramlist.0.stab@, @IDENTIFIER.name@);
+			@i @paramlist.0.vartab@ = symtab_init();
+			@pre symtab_contains( @paramlist.0.vartab@, @IDENTIFIER.name@);
+			@pre symtab_add( @paramlist.0.vartab@, @IDENTIFIER.name@);
 		@}
 	| paramlist IDENTIFIER
 		@{
 			/* paramlist.1 hast the symtab from the parameters -> get it up the tree */
-			@i @paramlist.0.stab@ = @paramlist.1.stab@;
-			@pre symtab_contains( @paramlist.1.stab@, @IDENTIFIER.name@);
-			@pre symtab_add( @paramlist.1.stab@, @IDENTIFIER.name@);
+			@i @paramlist.0.vartab@ = @paramlist.1.vartab@;
+			@pre symtab_contains( @paramlist.1.vartab@, @IDENTIFIER.name@);
+			@pre symtab_add( @paramlist.1.vartab@, @IDENTIFIER.name@);
 		@}
 	;
 		
 Structdef: STRUCT IDENTIFIER ':' paramdef	END
+		@{
+			/* check if there already is a struct with this name */
+			@pre symtab_contains(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+			
+			/* add the struct name if all went well */
+			@pre symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+		@}
 	;
 
 Funcdef: FUNC IDENTIFIER '(' paramdef ')' Stats END
-		@{ 
-			@i @Stats.stab@ = @paramdef.stab@;
+		@{ 	
+			/* the parameters are visible within the function -> get vartab down the tree */
+			@i @Stats.vartab@ = @paramdef.vartab@;
+			
+			/* the structtab may be needed in the Stats as well --> get it down too! */
+			@i @Funcdef.0.structtab@ = @Stats.0.structtab@;
 		@}
 	;
 
@@ -177,26 +206,65 @@ Stats: /* empty */
 Condlist:  /* empty */ 
 	| Condlist Expr THEN Stats END ';'
 	;
+	
+letdef:  
+		@{
+			/* symbol table is from the Stats */
+			/*@i @letdef.0.vartab@ = symtab_init();*/
+		@}
+	| letlist
+		@{
+			/* propagate Stats vartab down the tree */
+			@i @letlist.0.vartab@ = @letdef.0.vartab@;
+		@}
+	;
 
 /*{ IDENTIFIER '=' Expr ';' }*/
-Letlist:  /* empty */
-	| Letlist Assignment ';'
+letlist: Assignment
+		@{
+			/* fork the vartab */
+			@i 	 @Assignment.0.vartab@ = symtab_init();
+			@pre @Assignment.0.vartab@ = symtab_dup( @letlist.0.vartab@, @Assignment.0.vartab@);
+			
+			/* add the name to the symtab */
+			@pre symtab_contains( @letlist.0.vartab@, @Assignment.name@);
+			@pre symtab_add( @letlist.0.vartab@, @Assignment.name@);
+		@}
+	| letlist Assignment ';'
+		@{
+			/* letlist.1 hast the symtab from the defs --> get it up the tree */
+			@i @letlist.0.vartab@ = @letlist.1.vartab@;
+			
+			/* get symtab down to the assignment */
+			@i @Assignment.0.vartab@ = @letlist.0.vartab@;
+			
+			@pre symtab_contains( @letlist.1.vartab@, @Assignment.0.name@);
+			@pre symtab_add( @letlist.1.vartab@, @Assignment.0.name@);
+		@}
 	; 
+
+/* Schreibender Variablenzugriff */ 
+Assignment: IDENTIFIER '=' Expr 
+		@{
+			@i @Assignment.0.name@ = @IDENTIFIER.0.name@;
+		@}
+	;
 	 
 Stat: RETURN Expr
 	| COND /*{ Expr THEN Stats END ';' }*/ Condlist END 
-	| LET /*{ IDENTIFIER '=' Expr ';' }*/ Letlist IN Stats END
+	| LET letdef IN Stats END
+		@{ 
+			/* everything that was defined in the LET block is visible in the IN block */
+			@i @letdef.0.vartab@ = @Stat.0.vartab@;
+		@}
 	| WITH Expr ':' IDENTIFIER DO Stats END
 	| Assignment 
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 	| Term
 	;
 	
-/* Schreibender Variablenzugriff */ 
-Assignment: IDENTIFIER '=' Expr 
-	
-Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff */ 
-/*	| IDENTIFIER 			/* Schreibender Variablenzugriff */ 
+Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/ 
+/*	| IDENTIFIER 			/* Schreibender Variablenzugriff 	*/ 
 	;
 	
 Notexpr: '-' Term
@@ -225,7 +293,7 @@ Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
 	| Term NOTEQUAL Term /* Term <> Term */
 	| Term
 		@{
-			@i @term.0.stab@ = @expr.0.stab@;
+			@i @term.0.vartab@ = @expr.0.vartab@;
 		@}
 	;
 	
@@ -241,7 +309,7 @@ Term: '(' Expr ')'
 	| NUMBER
 	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
 	| IDENTIFIER			 /* Lesender Variablenzugriff */
-/*	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste  */
+/*	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste */
 	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist Arg ')' 	/* Funktionsaufruf */ 
 	;
 
@@ -290,8 +358,8 @@ symtab *symtab_add(symtab *tab, char *name)
 {
 	symtabentry *entry = stentry_init();
 	entry->name = strdup(name);
-	/*entry->type = type;*/
 	entry->next = NULL;
+	entry->ref = NULL;
 	stentry_append(tab, entry);
 	return tab;
 }
