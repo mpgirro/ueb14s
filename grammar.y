@@ -102,7 +102,7 @@ extern FILE* yyin;
 @attributes { int val; } 							NUMBER
 @attributes { char *name; } 						IDENTIFIER
 
-@attributes { symtab *structtab } 						Program
+@attributes { symtab *structtab, *symtab fieldtab } 	Program
 @attributes { symtab *vartab; symtab *structtab } 		Funcdef
 @attributes { symtab *vartab; symtab *structtab } 		Stats
 @attributes { symtab *vartab; symtab *structtab } 		Stat
@@ -124,27 +124,35 @@ Program: { Def ';' }
 */
 Program: /* empty */
 		@{
-			/* empty struct symbol table */
+			/* init empty struct symbol table */
 			@i @Program.0.structtab@ = symtab_init();
+			
+			/* init empty field symbol table */
+			@i @Program.0.fieldtab@ = symtab_init();
 		@}
 	| Program Def ';'
 		@{
-			/* the structtab got initialised by an empty program
-			 * propagate it to the parent program and the definitions now */
+			/* the structtab and fieldtab got initialised by an empty program
+			 * propagate them to the parent program and the definitions now */
 			@i @Program.0.structtab@ = @Program.1.structtab@;
+			@i @Program.0.fieldtab@  = @Program.1.fieldtab@;
+			
 			@i @Def.0.structtab@ = @Program.1.structtab@;
+			@i @Def.0.fieldtab@  = @Program.1.fieldtab@;
 		@}
 	; 
 
 Def: Funcdef
 		@{
-			/* propagate the struct table to the every function def */
+			/* propagate the struct and field sym table to every function def */
 			@i @Funcdef.0.structtab@ = @Def.0.structtab@;
+			@i @Funcdef.0.fieldtab@ = @Def.0.fieldtab@;
 		@}
 	| Structdef
 		@{
-			/* propagate the struct table to the every struct def */
+			/* propagate the struct and field table to the every struct def */
 			@i @Structdef.0.structtab@ = @Def.0.structtab@;
+			@i @Structdef.0.fieldtab@ = @Def.0.fieldtab@;
 		@}
 	;
 	
@@ -176,14 +184,49 @@ paramlist: IDENTIFIER
 			@pre symtab_add( @paramlist.1.vartab@, @IDENTIFIER.name@);
 		@}
 	;
+	
+/* this construct merely exists to be not confused with a paradef by the parser */
+stuctfielddef:  ':' fielddef
+		@{
+			/* get the fieldtab even further down */
+			@i @fielddef.0.fieldtab@ = @stuctfielddef.0.fieldtab@;
+		@}
+	;
+
+fielddef: /* empty */
+		/* well, we don't have any field definitions here, so there is nothing to add */
+	| fieldlist
+		@{
+			/* and yet even further down */
+			@i @fieldlist.0.fieldtab@ = @fielddef.0.fieldtab@;
+		@}
+	;
+	
+fieldlist: IDENTIFIER
+		@{
+			@pre symtab_contains( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+			@pre symtab_add( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+		@}
+	| fieldlist IDENTIFIER
+		@{
+			@pre symtab_contains( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+			@pre symtab_add( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+			
+			/* we will still need this further down */
+			@i @fieldlist.1.fieldtab@ = @fieldlist.0.fieldtab@;
+		@}
+	;
 		
-Structdef: STRUCT IDENTIFIER ':' paramdef	END
+Structdef: STRUCT IDENTIFIER stuctfielddef	END
 		@{
 			/* check if there already is a struct with this name */
 			@pre symtab_contains(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
 			
 			/* add the struct name if all went well */
 			@pre symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+			
+			/* get the fieldtab down to the field definitions */
+			@i @stuctfielddef.0.fieldtab@ = @Structdef.0.fieldtab@;
 		@}
 	;
 
