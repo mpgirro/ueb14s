@@ -16,7 +16,7 @@ clean:
 	
 # creates oxout.y oxout.l
 ox:	$(SRCS_FILES)
-	ox $SRCS_FILES
+	ox $(SRCS_FILES)
 	
 # creates oxout.tab.h oxout.tab.c
 bison: ox
