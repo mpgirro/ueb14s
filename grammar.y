@@ -101,6 +101,7 @@ extern FILE* yyin;
 @attributes { symtab *fieldtab; symtab *vartab; }						LetParamDef
 @attributes { symtab *fieldtab; symtab *vartab; }						LetList
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
+@attributes { symtab *fieldtab; symtab *vartab; }						Lexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Notexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Addexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Mulexpr
@@ -403,7 +404,7 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/
 				
 			/* and as always there is stuff to get down */
 			@i @Term.vartab@ 	= @Lexpr.vartab@;
-			@i @Term.fieldtab@ = @Lexpr.fieldtab@;	
+			@i @Term.fieldtab@  = @Lexpr.fieldtab@;	
 		@}
 	
 	| IDENTIFIER  /* Schreibender Variablenzugriff 	*/ 
