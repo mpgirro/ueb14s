@@ -12,24 +12,7 @@
 #define SYNTAX_ERROR 	2
 #define OTHER_ERROR		3 	/* use of non visible name, etc. */
 
-
-/* === enums === */
-/*
-enum namespace {
-	ns_struct,
-	ns_field
-};
-*/
 /* === structs === */
-
-/*
-struct ast_node{
-	char *id;
-	int val;
-	enum nodetype type;
-	struct ast_node *left;
-	struct ast_node *right;
-};*/
 
 struct symboltable_entry{
 	char *name;
@@ -60,7 +43,8 @@ void othererror(void);
 symtab *symtab_init(void);
 symtab *symtab_add(symtab *tab, char *name);
 symtab *symtab_dup(symtab *src, symtab *dest);
-void symtab_contains(symtab *tab, char *name);
+void symtab_checkdup(symtab *tab, char *name);
+void symtab_isdef(symtab *tab, char *name);
 
 symtabentry *stentry_init(void);
 symtabentry *stentry_append(symtab *tab, symtabentry *entry);
@@ -98,8 +82,6 @@ extern FILE* yyin;
 
 %start start
 
-/* attributes for terminals */
-@attributes { int val; } 							NUMBER
 @attributes { char *name; } 						IDENTIFIER
 
 @attributes { symtab *structtab, *symtab fieldtab } 	Program
@@ -107,10 +89,10 @@ extern FILE* yyin;
 @attributes { symtab *vartab; symtab *structtab } 		Stats
 @attributes { symtab *vartab; symtab *structtab } 		Stat
 	
-@attributes { symtab *vartab; } 						Stats
+@attributes { symtab *structtab, *symtab fieldtab; symtab *vartab; } Stats
 @attributes { symtab *vartab; } 						paramdef
 @attributes { symtab *vartab; } 						paramlist
-@attributes { symtab *vartab; } 						letdef
+@attributes { *symtab fieldtab, *symtab *vartab; } 		letdef
 @attributes { symtab *vartab; } 						letlist
 	
 /* this is to fill the symbol tables - maybe this is not even necessary? */
@@ -132,8 +114,8 @@ Program: /* empty */
 		@}
 	| Program Def ';'
 		@{
-			/* the structtab and fieldtab got initialised by an empty program
-			 * propagate them to the parent program and the definitions now */
+			/* the structtab and fieldtab got initialised by an empty program nonterminal
+			 * --> propagate them to the parent program and the definitions now */
 			@i @Program.0.structtab@ = @Program.1.structtab@;
 			@i @Program.0.fieldtab@  = @Program.1.fieldtab@;
 			
@@ -158,34 +140,38 @@ Def: Funcdef
 	
 paramdef:
 		@{
-			/* empty symbol table */
+			/* empty var symbol table */
 			@i @paramdef.0.vartab@ = symtab_init();
 		@}
 	| paramlist
 		@{
-			/* propagate param symtab up the tree */
-			@i @paramdef.0.vartab@ = @paramlist.0.vartab@;
+			/* empty var symbol table */
+			@i @paramdef.0.vartab@ = symtab_init();
+			
+			/* propagate new param symtab down the tree */
+			@i @paramlist.0.vartab@ = @paramdef.0.vartab@;
 		@}
 	;
 
 /* this one is new - we need the distinction to init a symtab */	
 paramlist: IDENTIFIER
 		@{
-			/* this is the first param - create new symtab */
-			@i @paramlist.0.vartab@ = symtab_init();
-			@pre symtab_contains( @paramlist.0.vartab@, @IDENTIFIER.name@);
+			/* check for duplicate var definiton, add to symtab if not */
+			@pre symtab_checkdup( @paramlist.0.vartab@, @IDENTIFIER.name@);
 			@pre symtab_add( @paramlist.0.vartab@, @IDENTIFIER.name@);
 		@}
 	| paramlist IDENTIFIER
 		@{
-			/* paramlist.1 hast the symtab from the parameters -> get it up the tree */
-			@i @paramlist.0.vartab@ = @paramlist.1.vartab@;
-			@pre symtab_contains( @paramlist.1.vartab@, @IDENTIFIER.name@);
-			@pre symtab_add( @paramlist.1.vartab@, @IDENTIFIER.name@);
+			/* check for duplicate var definiton, add to symtab if not */
+			@pre symtab_checkdup( @paramlist.0.vartab@, @IDENTIFIER.name@);
+			@pre symtab_add( @paramlist.0.vartab@, @IDENTIFIER.name@);
+			
+			/* get the var symtab down the tree */
+			@i @paramlist.1.vartab@ = @paramlist.0.vartab@;
 		@}
 	;
 	
-/* this construct merely exists to be not confused with a paradef by the parser */
+/* this construct merely exists to be not confused with a paramdef by the parser */
 stuctfielddef:  ':' fielddef
 		@{
 			/* get the fieldtab even further down */
@@ -202,14 +188,19 @@ fielddef: /* empty */
 		@}
 	;
 	
+/* TODO hier muss ich zu den fields noch die zugehörige struct 
+ * abspeichern. es wird wohl am bestens sein wenn ich sie in der 
+ * structdef mittels eines attributes runterpropagiere */
 fieldlist: IDENTIFIER
-		@{
-			@pre symtab_contains( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+		@{	
+			/* add the field name to the field list, but only if field name is unique */
+			@pre symtab_checkdup( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
 			@pre symtab_add( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
 		@}
 	| fieldlist IDENTIFIER
 		@{
-			@pre symtab_contains( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
+			/* add the field name to the field list, but only if field name is unique */
+			@pre symtab_checkdup( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
 			@pre symtab_add( @fieldlist.0.fieldtab@, @IDENTIFIER.name@);
 			
 			/* we will still need this further down */
@@ -217,10 +208,10 @@ fieldlist: IDENTIFIER
 		@}
 	;
 		
-Structdef: STRUCT IDENTIFIER stuctfielddef	END
+Structdef: STRUCT IDENTIFIER stuctfielddef END
 		@{
 			/* check if there already is a struct with this name */
-			@pre symtab_contains(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+			@pre symtab_checkdup(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
 			
 			/* add the struct name if all went well */
 			@pre symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
@@ -232,82 +223,138 @@ Structdef: STRUCT IDENTIFIER stuctfielddef	END
 
 Funcdef: FUNC IDENTIFIER '(' paramdef ')' Stats END
 		@{ 	
-			/* the parameters are visible within the function -> get vartab down the tree */
+			/* the parameters are visible within the function --> 
+			 * get the new vartab (by the paramlist) down the tree */
 			@i @Stats.vartab@ = @paramdef.vartab@;
 			
-			/* the structtab may be needed in the Stats as well --> get it down too! */
-			@i @Funcdef.0.structtab@ = @Stats.0.structtab@;
+			/* these come from the Def, are globally visible and may be 
+			 * needed in the Stats as well --> get them down too! */
+			@i @Stats.0.structtab@ = @Funcdef.0.structtab@;
+			@i @Stats.0.fieldtab@ = @Funcdef.0.fieldtab@;
 		@}
 	;
 
-/*Stats: { Stat ';' }*/
 Stats: /* empty */
-	| Stats Stat ';' 
-	;
-	
-/*{ Expr THEN Stats END ';' }*/
-Condlist:  /* empty */ 
-	| Condlist Expr THEN Stats END ';'
-	;
-	
-letdef:  
-		@{
-			/* symbol table is from the Stats */
-			/*@i @letdef.0.vartab@ = symtab_init();*/
+		/* there ain't no more to do */
+	| Stats Stat ';' 		
+		@{ 	
+			/* just distributing - move along please */
+			@i @Stats.1.structtab@ = @Stats.0.structtab@;
+			@i @Stat.0.structtab@  = @Stats.0.structtab@;
+			
+			@i @Stats.1.fieldtab@ = @Stats.0.fieldtab@;
+			@i @Stat.0.fieldtab@  = @Stats.0.fieldtab@;
+			
+			@i @Stats.1.vartab@ = @Stats.0.vartab@;
+			@i @Stat.0.vartab@  = @Stats.0.vartab@;
 		@}
+	;
+	
+Condlist:  /* empty */ 
+		/* there ain't no more to do */
+	| Condlist Expr THEN Stats END ';'
+		@{
+			/* distribute everything to the condlist */
+			@i @Condlist.1.structtab@ = @Condlist.0.structtab@;
+			@i @Condlist.1.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Condlist.1.vartab@ 	  = @Condlist.0.vartab@;
+				
+			/* distribute everything to the Stats */
+			@i @Stats.0.structtab@ = @Condlist.0.structtab@;
+			@i @Stats.0.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Stats.0.vartab@	   = @Condlist.0.vartab@;	
+				
+			/* the Expr doesn't need to know the structs (at least i hope so) */	
+			@i @Expr.0.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Expr.0.vartab@	  = @Condlist.0.vartab@;
+		@}
+	;
+	
+/* this construct merely exists to avoid a conflict when trying to destinct 
+ * between the LET definitons and a Lexpr=Expt Statement */
+letdef: LET letparamdef
+		@{
+			@i @letparamdef.vartab@   = @letdef.vartab@
+			@i @letparamdef.fieldtab@ = @letparamdef.fieldtab@
+		@}
+	;
+	
+letparamdef:  
+		/* there ain't no more to do */
 	| letlist
 		@{
 			/* propagate Stats vartab down the tree */
-			@i @letlist.0.vartab@ = @letdef.0.vartab@;
+			@i @letlist.0.vartab@	= @letparamdef.0.vartab@;
+			@i @letlist.0.fieldtab@ = @letparamdef.0.fieldtab@;
 		@}
 	;
 
-/*{ IDENTIFIER '=' Expr ';' }*/
-letlist: Assignment
-		@{
-			/* fork the vartab */
-			@i 	 @Assignment.0.vartab@ = symtab_init();
-			@pre @Assignment.0.vartab@ = symtab_dup( @letlist.0.vartab@, @Assignment.0.vartab@);
+letlist: IDENTIFIER '=' Expr 
+		@{			
+			/* now we define a new variable */
+			@pre symtab_checkdup( @letlist.0.vartab@, @IDENTIFIER.0.name@);
+			@pre symtab_add( @letlist.0.vartab@, @IDENTIFIER.0.name@);
 			
-			/* add the name to the symtab */
-			@pre symtab_contains( @letlist.0.vartab@, @Assignment.name@);
-			@pre symtab_add( @letlist.0.vartab@, @Assignment.name@);
+			/* this may be needed further down */
+			@i @Expr.0.vartab@   = @letlist.0.vartab@;
+			@i @expr.0.fieldtab@ = @letlist.0.fieldtab@;
 		@}
-	| letlist Assignment ';'
+	| letlist IDENTIFIER '=' Expr  ';'
 		@{
-			/* letlist.1 hast the symtab from the defs --> get it up the tree */
-			@i @letlist.0.vartab@ = @letlist.1.vartab@;
+			/* now we define a new variable */
+			@pre symtab_checkdup( @letlist.0.vartab@, @IDENTIFIER.0.name@);
+			@pre symtab_add( @letlist.0.vartab@, @IDENTIFIER.0.name@);
 			
-			/* get symtab down to the assignment */
-			@i @Assignment.0.vartab@ = @letlist.0.vartab@;
+			/* this may be needed by the Expr further down */
+			@i @Expr.0.vartab@   = @letlist.0.vartab@;
+			@i @expr.0.fieldtab@ = @letlist.0.fieldtab@;
 			
-			@pre symtab_contains( @letlist.1.vartab@, @Assignment.0.name@);
-			@pre symtab_add( @letlist.1.vartab@, @Assignment.0.name@);
+			/* and of course, the next letlist will need this as well */
+			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@
+			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@
 		@}
 	; 
 
-/* Schreibender Variablenzugriff */ 
-Assignment: IDENTIFIER '=' Expr 
-		@{
-			@i @Assignment.0.name@ = @IDENTIFIER.0.name@;
-		@}
-	;
 	 
 Stat: RETURN Expr
-	| COND /*{ Expr THEN Stats END ';' }*/ Condlist END 
-	| LET letdef IN Stats END
+		@{
+			/* I could open a distribution business by now... */
+			@i @Expr.0.vartab@   = @Stat.0.vartab@;
+			@i @Expr.0.fieldtab@ = @Stat.0.fieldtab@;
+		@}
+	| COND Condlist END 
+		@{
+			/* distribute everything to the condlist */
+			@i @Condlist.0.structtab@ = @Stat.0.structtab@;
+			@i @Condlist.0.fieldtab@  = @Stat.0.fieldtab@;
+			@i @Condlist.0.vartab@ 	  = @Stat.0.vartab@;
+		}@
+	| letdef IN Stats END
 		@{ 
-			/* everything that was defined in the LET block is visible in the IN block */
-			@i @letdef.0.vartab@ = @Stat.0.vartab@;
+			/* in here new variables may be added - fork the vartab to ensure visibility scope */
+			@i @letdef.0.vartab@ = symtab_init();
+			@pre symtab_dup( @Stat.0.vartab@, @letdef.0.vartab@);
+			
+			/* the new vartab is visible in the following Stats */
+			@i @Stats.1.vartab@ = @letdef.0.vartab@;
+			
+			/* and the fieldtab may be needed as well */
+			@i @letdef.0.fieldtab@ = @Stat.0.fieldtab@;
+			@i @Stats.0.fieldtab@ = @Stat.0.fieldtab@;
+			
+			/* and the Stats may define a with block even now --> get down the structtab */
+			@i @Stats.0.structtab@ = @Stat.0.structtab@
 		@}
 	| WITH Expr ':' IDENTIFIER DO Stats END
-	| Assignment 
 	| Lexpr '=' Expr 	/* Zuweisung */ 
+		@{
+				
+		@}
 	| Term
 	;
 	
 Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/ 
-/*	| IDENTIFIER 			/* Schreibender Variablenzugriff 	*/ 
+	| IDENTIFIER 			/* Schreibender Variablenzugriff 	*/ 
 	;
 	
 Notexpr: '-' Term
@@ -429,11 +476,26 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 	return dest;
 }
 
-void void symtab_contains(symtab *tab, char *name)
+/*
+ * checks if a symbol 'name' is already in the symbol table *tab, raises an error if so
+ */
+void symtab_checkdup(symtab *tab, char *name)
 {
 	symtabentry *entry = stentry_find(tab, name);
 	if(entry != NULL) {
 		(void) fprintf(stderr, "duplicate names found: %s\n", name);
+		othererror();
+	}
+}
+
+/*
+ * check if a symbol 'name' is defined in *tab, raised an error if not
+ */
+void symtab_isdef(symtab *tab, char *name)
+{
+	symtabentry *entry = stentry_find(tab, name);
+	if(entry == NULL) {
+		(void) fprintf(stderr, "symbol not defined in scope: %s\n", name);
 		othererror();
 	}
 }
