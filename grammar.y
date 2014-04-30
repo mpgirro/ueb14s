@@ -43,6 +43,8 @@ void othererror(void);
 symtab *symtab_init(void);
 symtab *symtab_add(symtab *tab, char *name);
 symtab *symtab_dup(symtab *src, symtab *dest);
+symtab *symtab_merge(symtab *tab1, symtab *tab2);
+symtab *fields_of_struct(symtab *ftab, char *name);
 void symtab_checkdup(symtab *tab, char *name);
 void symtab_isdef(symtab *tab, char *name);
 
@@ -100,10 +102,6 @@ extern FILE* yyin;
 
 %%
 
-/*
-Program: { Def ';' }
-	;
-*/
 Program: /* empty */
 		@{
 			/* init empty struct symbol table */
@@ -128,13 +126,13 @@ Def: Funcdef
 		@{
 			/* propagate the struct and field sym table to every function def */
 			@i @Funcdef.0.structtab@ = @Def.0.structtab@;
-			@i @Funcdef.0.fieldtab@ = @Def.0.fieldtab@;
+			@i @Funcdef.0.fieldtab@  = @Def.0.fieldtab@;
 		@}
 	| Structdef
 		@{
 			/* propagate the struct and field table to the every struct def */
 			@i @Structdef.0.structtab@ = @Def.0.structtab@;
-			@i @Structdef.0.fieldtab@ = @Def.0.fieldtab@;
+			@i @Structdef.0.fieldtab@  = @Def.0.fieldtab@;
 		@}
 	;
 	
@@ -230,7 +228,7 @@ Funcdef: FUNC IDENTIFIER '(' paramdef ')' Stats END
 			/* these come from the Def, are globally visible and may be 
 			 * needed in the Stats as well --> get them down too! */
 			@i @Stats.0.structtab@ = @Funcdef.0.structtab@;
-			@i @Stats.0.fieldtab@ = @Funcdef.0.fieldtab@;
+			@i @Stats.0.fieldtab@  = @Funcdef.0.fieldtab@;
 		@}
 	;
 
@@ -274,8 +272,8 @@ Condlist:  /* empty */
  * between the LET definitons and a Lexpr=Expt Statement */
 letdef: LET letparamdef
 		@{
-			@i @letparamdef.vartab@   = @letdef.vartab@
-			@i @letparamdef.fieldtab@ = @letparamdef.fieldtab@
+			@i @letparamdef.vartab@   = @letdef.vartab@;
+			@i @letparamdef.fieldtab@ = @letparamdef.fieldtab@;
 		@}
 	;
 	
@@ -310,12 +308,11 @@ letlist: IDENTIFIER '=' Expr
 			@i @expr.0.fieldtab@ = @letlist.0.fieldtab@;
 			
 			/* and of course, the next letlist will need this as well */
-			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@
-			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@
+			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@;
+			@i @letlist.1.fieldtab@ = @letlist.0.fieldtab@;
 		@}
 	; 
 
-	 
 Stat: RETURN Expr
 		@{
 			/* I could open a distribution business by now... */
@@ -340,67 +337,236 @@ Stat: RETURN Expr
 			
 			/* and the fieldtab may be needed as well */
 			@i @letdef.0.fieldtab@ = @Stat.0.fieldtab@;
-			@i @Stats.0.fieldtab@ = @Stat.0.fieldtab@;
+			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
 			
 			/* and the Stats may define a with block even now --> get down the structtab */
-			@i @Stats.0.structtab@ = @Stat.0.structtab@
+			@i @Stats.0.structtab@ = @Stat.0.structtab@;
 		@}
 	| WITH Expr ':' IDENTIFIER DO Stats END
+		@{
+			/* check if IDENTIFIER is a valid struct */
+			@pre symtab_isdef( @Stat.0.structtab@, @IDENTIFIER.0.name@);
+			
+			/* good! now get all fields of the struct into a new symtab
+			 * --> these will be added to the varscope of the with-block.  
+			 * yet, we will need the already defined variables as well, so
+			 * merge these two symtables into one
+			 * NOTE: the result will be in arg2 (so the return * of the function 
+			 * -- a new symtab to ensure scope), and the elements of arg1 will be
+			 * appended as copies, so no mixup with the original elements */
+			@pre @Stats.vartab@ = symtab_merge( @Stat.vartab@, fields_of_struct( @Stat.fieldtab@, @IDENTIFIER.0.name@));
+			
+			/* and we have to pass things on as well */
+			@i @Stats.fieldtab@ = @Stat.fieldtab@;
+			
+			@i @Expr.vartab@   = @Stat.vartab@;
+			@i @Expr.fieldtab@ = @Stat.fieldtab@;
+		@}
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 		@{
+			/* onwards down the tree! */
+			@Lexpr.vartab@ = @Stat.vartab@;
+			@Expr.vartab@  = @Stat.vartab@;	
 				
+			@Lexpr.fieldtab@ = @Stat.fieldtab@;
+			@Expr.fieldtab@  = @Stat.fieldtab@;
 		@}
 	| Term
+		@{
+			/* down the rabbit hole! */
+			@Term.vartab@ 	= @Stat.vartab@;
+			@Term.fieldtab@ = @Stat.fieldtab@;	
+		@}
 	;
 	
 Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/ 
-	| IDENTIFIER 			/* Schreibender Variablenzugriff 	*/ 
+		@{
+			/* check if IDENTIFIER is a defined field */
+			@pre symtab_isdef( @Lexpr.0.fieldtab@, @IDENTIFIER.0.name@);
+				
+			/* and as always there is stuff to get down */
+			@Term.vartab@ 	= @Lexpr.vartab@;
+			@Term.fieldtab@ = @Lexpr.fieldtab@;	
+		@}
+	
+	| IDENTIFIER  /* Schreibender Variablenzugriff 	*/ 
+		@{
+			/* check if IDENTIFIER is a visible variable */
+			@pre symtab_isdef( @Lexpr.0.vartab@, @IDENTIFIER.0.name@);
+		@}
 	;
 	
 Notexpr: '-' Term
+		@{
+			@i @Term.vartab@   = @Notexpr.vartab@;
+			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
+		@}
 	| NOT Term
+		@{
+			@i @Term.vartab@   = @Notexpr.vartab@;
+			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
+		@}
 	| '-' Notexpr
+		@{
+			@i @Notexpr.1.vartab@   = @Notexpr.0.vartab@;
+			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
+		@}
 	| NOT Notexpr 
+		@{
+			@i @Notexpr.1.vartab@   = @Notexpr.0.vartab@;
+			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
+		@}
 	;
 	
 Addexpr: Term '+' Term
+		@{
+			@Term.0.vartab@ = @Addexpr.0.vartab@;
+			@Term.1.vartab@ = @Addexpr.0.vartab@;
+			
+			@Term.0.fieldtab@ = @Addexpr.0.fieldtab@;
+			@Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
+		@}	
 	| Addexpr '+' Term
+		@{
+			@Term.0.vartab@    = @Addexpr.0.vartab@;
+			@Addexpr.1.vartab@ = @Addexpr.0.vartab@;
+		
+			@Term.0.fieldtab@    = @Addexpr.0.fieldtab@;
+			@Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
+		@}	
 	;
 	
 Mulexpr: Term '*' Term
+		@{
+			@Term.0.vartab@ = @Mulexpr.0.vartab@;
+			@Term.1.vartab@ = @Mulexpr.0.vartab@;
+	
+			@Term.0.fieldtab@ = @Mulexpr.0.fieldtab@;
+			@Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
+		@}	
 	| Mulexpr '*' Term
+		@{
+			@Term.0.vartab@    = @Mulexpr.0.vartab@;
+			@Mulexpr.1.vartab@ = @Mulexpr.0.vartab@;
+
+			@Term.0.fieldtab@    = @Mulexpr.0.fieldtab@;
+			@Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
+		@}	
 	;
 	
 Orexpr: Term OR Term
+		@{
+			@Term.0.vartab@ = @Orexpr.0.vartab@;
+			@Term.1.vartab@ = @Orexpr.0.vartab@;
+
+			@Term.0.fieldtab@ = @Orexpr.0.fieldtab@;
+			@Term.1.fieldtab@ = @Orexpr.0.fieldtab@;
+		@}	
 	| Orexpr OR Term
+		@{
+			@Term.0.vartab@   = @Orexpr.0.vartab@;
+			@Orexpr.1.vartab@ = @Orexpr.0.vartab@;
+
+			@Term.0.fieldtab@   = @Orexpr.0.fieldtab@;
+			@Orexpr.1.fieldtab@ = @Orexpr.0.fieldtab@;
+		@}	
 	;
 
-Expr: /* Notexpr /*{ NOT | '-' }*/  Notexpr
-	| /* Term /* { '+' Term }*/		Addexpr
-	| /* Term /* { '*' Term }*/		Mulexpr
-	| /* Term /* { OR Term }*/		Orexpr
+Expr: Notexpr
+		@{
+			@i @Notexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Notexpr.0.fieldtab@ = @Expr.0.fieldtab@;
+		@}
+	| Addexpr
+		@{
+			@i @Addexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Addexpr.0.fieldtab@ = @Expr.0.fieldtab@;
+		@}
+	| Mulexpr
+		@{
+			@i @Mulexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Mulexpr.0.fieldtab@ = @Expr.0.fieldtab@;
+		@}
+	| Orexpr
+		@{
+			@i @Orexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Orexpr.0.fieldtab@ = @Expr.0.fieldtab@;
+		@}
 	| Term '>' Term
-	| Term NOTEQUAL Term /* Term <> Term */
+		@{
+			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
+			
+			@i @Term.1.vartab@   = @Expr.0.vartab@;
+			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
+		@}
+	| Term NOTEQUAL Term 
+		@{
+			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
+		
+			@i @Term.1.vartab@   = @Expr.0.vartab@;
+			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
+		@}
 	| Term
 		@{
-			@i @term.0.vartab@ = @expr.0.vartab@;
+			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	;
 	
 Exprlist: /* empty */
+		/* there ain't no more to do */
 	| Exprlist Expr ','
+		@{
+			/* we didn't have anything to get down for quite a while */
+			@i @Exprlist.1.vartab@ = @Exprlist.0.vartab@;
+			@i @Expr.0.vartab@ 	   = @Exprlist.0.vartab@;
+				
+			@i @Exprlist.1.fieldtab@ = @Exprlist.0.fieldtab@;
+			@i @Expr.0.fieldtab@ 	 = @Exprlist.0.fieldtab@;
+		@}
 	; 
 	
 Arg: /* empty */
+		/* there ain't no more to do */
 	| Expr
+		@{
+			@i @Expr.vartab@   = @Arg.vartab@;
+			@i @Expr.fieldtab@ = @Arg.fieldtab@;
+		@}
 	; 
 		
 Term: '(' Expr ')'
+		@{
+			@i @Expr.vartab@   = @Term.vartab@;
+			@i @Expr.fieldtab@ = @Term.fieldtab@;
+		@}
 	| NUMBER
-	| Term '.' IDENTIFIER 	 /* Lesender Feldzugriff */
-	| IDENTIFIER			 /* Lesender Variablenzugriff */
-/*	| IDENTIFIER '(' ')'	 /* Funktionsaufruf mit leerer Argumentenliste */
+		/* we don't care for no numbers */
+	| Term '.' IDENTIFIER  /* Lesender Feldzugriff */
+		@{
+			/* check if IDENTIFIER is a defined field */
+			@pre symtab_isdef( @Term.0.fieldtab@, @IDENTIFIER.0.name@);
+			
+			/* and as always there is stuff to get down */
+			@Term.1.vartab@   = @Term.0.vartab@;
+			@Term.1.fieldtab@ = @Term.0.fieldtab@;	
+		@}
+	| IDENTIFIER  /* Lesender Variablenzugriff */
+		@{
+			/* check if IDENTIFIER is a defined variable */
+			@pre symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
+		@}
 	| IDENTIFIER '(' /*{ Expr ',' }*/ Exprlist Arg ')' 	/* Funktionsaufruf */ 
+		@{
+			/* IDENTIFIER is the name of the function --> ignore */
+			@i @Exprlist.vartab@ = @Term.vartab@;
+			@i @Arg.vartab@ 	 = @Term.vartab@;
+			
+			@i @Exprlist.fieldtab@ = @Term.fieldtab@;
+			@i @Arg.fieldtab@	   = @Term.fieldtab@;
+		@}
 	;
 
 %%
@@ -474,6 +640,34 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 		}
 	}
 	return dest;
+}
+
+/*
+ * adds every element of 
+ */
+symtab *symtab_merge(symtab *tab1, symtab *tab2)
+{
+	symtabentry *cursor = tab1->first;
+	while(cursor != NULL) {
+		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
+	}
+	return tab2;
+}
+
+/* search all entries of a symtab for element having a *ref equal to 'name'
+ * returns a new symtab with these elements, all elements are copies of there originals
+ */
+symtab *fields_of_struct(symtab *ftab, char *name)
+{
+	symtab *fstab = symtab_init(); /* fields of struct */
+	symtabentry *cursor = ftab->first;
+	while(cursor != NULL) {
+		if(strcmp(name, cursor->name) == 0) {
+			stentry_append(fstab, stentry_dup(cursor)); /* append a copy! */
+		}
+		cursor = cursor->next;
+	}
+	return fstab;
 }
 
 /*
