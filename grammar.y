@@ -349,7 +349,7 @@ Stat: RETURN Expr
 			@pre symtab_dup( @Stat.0.vartab@, @LetDef.0.vartab@);
 			
 			/* the new vartab is visible in the following Stats */
-			@i @Stats.1.vartab@ = @LetDef.0.vartab@;
+			@i @Stats.0.vartab@ = @LetDef.0.vartab@;
 			
 			/* and the fieldtab may be needed as well */
 			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
