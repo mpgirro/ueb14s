@@ -373,7 +373,8 @@ Stat: RETURN Expr
 			@pre @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
 			
 			/* and we have to pass things on as well */
-			@i @Stats.fieldtab@ = @Stat.fieldtab@;
+			@i @Stats.fieldtab@  = @Stat.fieldtab@;
+			@i @Stats.structtab@ = @Stat.structtab@;
 			
 			@i @Expr.vartab@   = @Stat.vartab@;
 			@i @Expr.fieldtab@ = @Stat.fieldtab@;
@@ -381,17 +382,17 @@ Stat: RETURN Expr
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 		@{
 			/* onwards down the tree! */
-			@Lexpr.vartab@ = @Stat.vartab@;
-			@Expr.vartab@  = @Stat.vartab@;	
+			@i @Lexpr.vartab@ = @Stat.vartab@;
+			@i @Expr.vartab@  = @Stat.vartab@;	
 				
-			@Lexpr.fieldtab@ = @Stat.fieldtab@;
-			@Expr.fieldtab@  = @Stat.fieldtab@;
+			@i @Lexpr.fieldtab@ = @Stat.fieldtab@;
+			@i @Expr.fieldtab@  = @Stat.fieldtab@;
 		@}
 	| Term
 		@{
 			/* down the rabbit hole! */
-			@Term.vartab@ 	= @Stat.vartab@;
-			@Term.fieldtab@ = @Stat.fieldtab@;	
+			@i @Term.vartab@ 	= @Stat.vartab@;
+			@i @Term.fieldtab@ = @Stat.fieldtab@;	
 		@}
 	;
 	
@@ -401,8 +402,8 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/
 			@pre symtab_isdef( @Lexpr.0.fieldtab@, @IDENTIFIER.0.name@);
 				
 			/* and as always there is stuff to get down */
-			@Term.vartab@ 	= @Lexpr.vartab@;
-			@Term.fieldtab@ = @Lexpr.fieldtab@;	
+			@i @Term.vartab@ 	= @Lexpr.vartab@;
+			@i @Term.fieldtab@ = @Lexpr.fieldtab@;	
 		@}
 	
 	| IDENTIFIER  /* Schreibender Variablenzugriff 	*/ 
@@ -436,55 +437,55 @@ Notexpr: '-' Term
 	
 Addexpr: Term '+' Term
 		@{
-			@Term.0.vartab@ = @Addexpr.0.vartab@;
-			@Term.1.vartab@ = @Addexpr.0.vartab@;
+			@i @Term.0.vartab@ = @Addexpr.0.vartab@;
+			@i @Term.1.vartab@ = @Addexpr.0.vartab@;
 			
-			@Term.0.fieldtab@ = @Addexpr.0.fieldtab@;
-			@Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@ = @Addexpr.0.fieldtab@;
+			@i @Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
 		@}	
 	| Addexpr '+' Term
 		@{
-			@Term.0.vartab@    = @Addexpr.0.vartab@;
-			@Addexpr.1.vartab@ = @Addexpr.0.vartab@;
+			@i @Term.0.vartab@    = @Addexpr.0.vartab@;
+			@i @Addexpr.1.vartab@ = @Addexpr.0.vartab@;
 		
-			@Term.0.fieldtab@    = @Addexpr.0.fieldtab@;
-			@Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@    = @Addexpr.0.fieldtab@;
+			@i @Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
 		@}	
 	;
 	
 Mulexpr: Term '*' Term
 		@{
-			@Term.0.vartab@ = @Mulexpr.0.vartab@;
-			@Term.1.vartab@ = @Mulexpr.0.vartab@;
+			@i @Term.0.vartab@ = @Mulexpr.0.vartab@;
+			@i @Term.1.vartab@ = @Mulexpr.0.vartab@;
 	
-			@Term.0.fieldtab@ = @Mulexpr.0.fieldtab@;
-			@Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@ = @Mulexpr.0.fieldtab@;
+			@i @Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 		@}	
 	| Mulexpr '*' Term
 		@{
-			@Term.0.vartab@    = @Mulexpr.0.vartab@;
-			@Mulexpr.1.vartab@ = @Mulexpr.0.vartab@;
+			@i @Term.0.vartab@    = @Mulexpr.0.vartab@;
+			@i @Mulexpr.1.vartab@ = @Mulexpr.0.vartab@;
 
-			@Term.0.fieldtab@    = @Mulexpr.0.fieldtab@;
-			@Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@    = @Mulexpr.0.fieldtab@;
+			@i @Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 		@}	
 	;
 	
 Orexpr: Term OR Term
 		@{
-			@Term.0.vartab@ = @Orexpr.0.vartab@;
-			@Term.1.vartab@ = @Orexpr.0.vartab@;
+			@i @Term.0.vartab@ = @Orexpr.0.vartab@;
+			@i @Term.1.vartab@ = @Orexpr.0.vartab@;
 
-			@Term.0.fieldtab@ = @Orexpr.0.fieldtab@;
-			@Term.1.fieldtab@ = @Orexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@ = @Orexpr.0.fieldtab@;
+			@i @Term.1.fieldtab@ = @Orexpr.0.fieldtab@;
 		@}	
 	| Orexpr OR Term
 		@{
-			@Term.0.vartab@   = @Orexpr.0.vartab@;
-			@Orexpr.1.vartab@ = @Orexpr.0.vartab@;
+			@i @Term.0.vartab@   = @Orexpr.0.vartab@;
+			@i @Orexpr.1.vartab@ = @Orexpr.0.vartab@;
 
-			@Term.0.fieldtab@   = @Orexpr.0.fieldtab@;
-			@Orexpr.1.fieldtab@ = @Orexpr.0.fieldtab@;
+			@i @Term.0.fieldtab@   = @Orexpr.0.fieldtab@;
+			@i @Orexpr.1.fieldtab@ = @Orexpr.0.fieldtab@;
 		@}	
 	;
 
@@ -566,8 +567,8 @@ Term: '(' Expr ')'
 			@pre symtab_isdef( @Term.0.fieldtab@, @IDENTIFIER.0.name@);
 			
 			/* and as always there is stuff to get down */
-			@Term.1.vartab@   = @Term.0.vartab@;
-			@Term.1.fieldtab@ = @Term.0.fieldtab@;	
+			@i @Term.1.vartab@   = @Term.0.vartab@;
+			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
 		@}
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{
