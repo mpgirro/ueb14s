@@ -311,7 +311,7 @@ LetList: IDENTIFIER '=' Expr
 			
 			/* this may be needed further down */
 			@i @Expr.0.vartab@   = @LetList.0.vartab@;
-			@i @expr.0.fieldtab@ = @LetList.0.fieldtab@;
+			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
 		@}
 	| LetList IDENTIFIER '=' Expr  ';'
 		@{
@@ -321,7 +321,7 @@ LetList: IDENTIFIER '=' Expr
 			
 			/* this may be needed by the Expr further down */
 			@i @Expr.0.vartab@   = @LetList.0.vartab@;
-			@i @expr.0.fieldtab@ = @LetList.0.fieldtab@;
+			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
 			
 			/* and of course, the next LetList will need this as well */
 			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
