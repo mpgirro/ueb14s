@@ -324,7 +324,7 @@ LetList: IDENTIFIER '=' Expr
 			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
 			
 			/* and of course, the next LetList will need this as well */
-			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
+			@i @LetList.1.vartab@   = @LetList.0.vartab@;
 			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
 		@}
 	; 
@@ -341,7 +341,7 @@ Stat: RETURN Expr
 			@i @Condlist.0.structtab@ = @Stat.0.structtab@;
 			@i @Condlist.0.fieldtab@  = @Stat.0.fieldtab@;
 			@i @Condlist.0.vartab@ 	  = @Stat.0.vartab@;
-		}@
+		@}
 	| LetDef IN Stats END
 		@{ 
 			/* in here new variables may be added - fork the vartab to ensure visibility scope */
