@@ -51,8 +51,8 @@ or		{ return OR; 	 };
 
 "<>"		{ return NOTEQUAL; };
 
-{DECNUMBER}	{ return NUMBER; @{ @NUMBER.val@ = (signed long) strtol( yytext, NULL, 10); @} };
-{HEXNUMBER}	{ return NUMBER; @{ @NUMBER.val@ = (signed long) strtol( yytext, NULL, 16); @} };
+{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return NUMBER; };
+{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return NUMBER; };
 
 {IDENTIFIER}	{ return IDENTIFIER; @{ @IDENTIFIER.name@ = strdup(yytext); @} };
 
