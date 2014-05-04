@@ -576,14 +576,14 @@ Term: '(' Expr ')'
 			/* check if IDENTIFIER is a defined variable */
 			@pre symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
 		@}
-	| IDENTIFIER '(' ExprList FinalArg ')' 	/* Funktionsaufruf */ 
+	| IDENTIFIER '(' /*{ Expr ',' }*/ ExprList FinalArg ')' 	/* Funktionsaufruf */ 
 		@{
 			/* IDENTIFIER is the name of the function --> ignore */
 			@i @ExprList.vartab@ = @Term.vartab@;
-			@i @FinalArg.vartab@ = @Term.vartab@;
+			@i @FinalArg.vartab@ 	 = @Term.vartab@;
 			
 			@i @ExprList.fieldtab@ = @Term.fieldtab@;
-			@i @FinalArg.fieldtab@ = @Term.fieldtab@;
+			@i @FinalArg.fieldtab@	   = @Term.fieldtab@;
 		@}
 	;
 

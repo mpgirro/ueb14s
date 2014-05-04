@@ -3,7 +3,7 @@ OX_FILES = oxout.y oxout.l
 BISON_FILES = oxout.tab.h oxout.tab.c
 FLEX_FILES = lex.yy.c
 OBJECT_FILES = ox.o lex.o
-SRCS_FILES = tokens.l grammar.y
+SRCS_FILES = scan.l gram.y
 
 .PHONY: all clean
 
