@@ -2,7 +2,7 @@
 %{
 
 #include <stdio.h>
-#include "grammar.tab.h"
+/*#include "grammar.tab.h"*/
 #include "oxout.tab.h"
 
 extern void lexerror(int);
