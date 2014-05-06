@@ -202,10 +202,11 @@ Stat: RETURN Expr
 	| LET LetDef IN Stats END
 		@{ 
 			/* in here new variables may be added - fork the vartab to ensure visibility scope */
-			@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
+			//@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
+			@i @Stats.0.vartab@    = symtab_merge( @Stat.0.vartab@, @LetDef.0.vartab@);
 			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
 			
-			@i @Stats.0.vartab@    = @LetDef.0.vartab@;
+			//@i @Stats.0.vartab@    = @LetDef.0.vartab@;
 			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
 			@i @Stats.0.structtab@ = @Stat.0.structtab@;
 		@}
@@ -277,11 +278,14 @@ LetDef: LET LetList
 	;
  */
 LetDef: 
-
+		@{
+			@i @LetDef.0.vartab@ = symtab_init();
+		@}
 	| LetDef IDENTIFIER '=' Expr  ';' 
 		@{
 			
-			@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
+			//@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
+			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, @IDENTIFIER.0.name@, NULL);
 			
 			/* liegt hier der hase im pfeffer vergraben? */
 			@i @LetDef.1.fieldtab@ = @LetDef.0.fieldtab@;
@@ -547,6 +551,10 @@ symtab *symtab_add(symtab *tab, char *name, char *ref)
 /* make an exact duplicate (copy) of symbol table src into dest */
 symtab *symtab_dup(symtab *src, symtab *dest)
 {
+	printf("duplicating tab\n");
+	printf("================\n");
+	printf("src:\n");
+	symtab_print(src);
 	symtabentry *cursor;
 	symtabentry *copy;
 	if(src->first != NULL) 
@@ -566,6 +574,9 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 			cursor = cursor->next;
 		}
 	}
+	printf("dest:\n");
+	symtab_print(dest);
+	printf("duplicating complete\n");
 	return dest;
 }
 
