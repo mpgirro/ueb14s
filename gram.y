@@ -5,6 +5,7 @@
 	
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 /* === constants === */
 
@@ -16,7 +17,7 @@
 
 struct symboltable_entry{
 	char *name;
-	
+
 	/* if field entry this is the name  of the
 	 * struct this field belongs to, NULL else */
 	char *ref;  
@@ -53,6 +54,7 @@ symtabentry *stentry_append(symtab *tab, symtabentry *entry);
 symtabentry *stentry_dup(symtabentry *entry);
 symtabentry *stentry_find(symtab *tab, char *name);
 
+
 /* === global variables === */
 
 extern FILE* yyin;
@@ -82,25 +84,22 @@ extern FILE* yyin;
 %token <nval> NUMBER
 %token <sval> IDENTIFIER
 
-%start start
+%start Start
 
-@attributes { char *name; } 											IDENTIFIER
-
+@attributes { char *name; } IDENTIFIER
 @attributes { symtab *structtab; symtab *fieldtab; } 					Program
 @attributes { symtab *structtab; symtab *fieldtab; }					Def
-@attributes { symtab *vartab; } 										ParamDef
-@attributes { symtab *vartab; }											ParamList
-@attributes { symtab *fieldtab; char *structname; }						StuctFieldDef
-@attributes { symtab *fieldtab; char *structname; }						FieldDef
-@attributes { symtab *fieldtab; char *structname; }						FieldList
-@attributes { symtab *structtab; symtab *fieldtab; }					Structdef
+@attributes { symtab *structtab; symtab *fieldtab; symtab *ignoretab; }					Structdef
+//@attributes { symtab *fieldtab; char *structname; }						StuctFieldDef
+//@attributes { symtab *fieldtab; char *structname; }						FieldDef
 @attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
+@attributes { symtab *tab; char *structname; } 							Ids
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
+@attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Condlist
 @attributes { symtab *fieldtab; symtab *vartab; }						LetDef
 @attributes { symtab *fieldtab; symtab *vartab; }						LetParamDef
 @attributes { symtab *fieldtab; symtab *vartab; }						LetList
-@attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
 @attributes { symtab *fieldtab; symtab *vartab; }						Lexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Notexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Addexpr
@@ -110,11 +109,18 @@ extern FILE* yyin;
 @attributes { symtab *fieldtab; symtab *vartab; }						ExprList
 @attributes { symtab *fieldtab; symtab *vartab; }						FinalArg
 @attributes { symtab *fieldtab; symtab *vartab; }						Term
+
 	
-/* this is to fill the symbol tables - maybe this is not even necessary? */
-@traversal @lefttoright @preorder pre
+// semantic checks of function definitions
+// (duplicate parameters)
+@traversal @lefttoright @preorder fillscope
+// checks if an identifier is in scope
+@traversal @lefttoright @postorder checkscope
 
 %%
+	
+Start: Program
+	;
 
 Program: /* empty */
 		@{
@@ -150,98 +156,34 @@ Def: Funcdef
 		@}
 	;
 	
-ParamDef:
+Structdef: STRUCT IDENTIFIER ':' Ids END
 		@{
-			/* empty var symbol table */
-			@i @ParamDef.0.vartab@ = symtab_init();
-		@}
-	| ParamList
-		@{
-			/* empty var symbol table */
-			@i @ParamDef.0.vartab@ = symtab_init();
 			
-			/* propagate new param symtab down the tree */
-			@i @ParamList.0.vartab@ = @ParamDef.0.vartab@;
-		@}
-	;
-
-/* this one is new - we need the distinction to init a symtab */	
-ParamList: IDENTIFIER
-		@{
-			/* check for duplicate var definiton, add to symtab if not */
-			@pre symtab_checkdup( @ParamList.0.vartab@, @IDENTIFIER.name@);
-			@pre symtab_add( @ParamList.0.vartab@, @IDENTIFIER.name@);
-		@}
-	| ParamList IDENTIFIER
-		@{
-			/* check for duplicate var definiton, add to symtab if not */
-			@pre symtab_checkdup( @ParamList.0.vartab@, @IDENTIFIER.name@);
-			@pre symtab_add( @ParamList.0.vartab@, @IDENTIFIER.name@);
-			
-			/* get the var symtab down the tree */
-			@i @ParamList.1.vartab@ = @ParamList.0.vartab@;
+			@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+			@i @Ids.tab@ = @Structdef.0.fieldtab@;
+			@i @Ids.structname@ = @IDENTIFIER.0.name@;
 		@}
 	;
 	
-/* this construct merely exists to be not confused with a ParamDef by the parser */
-StuctFieldDef:  ':' FieldDef
-		@{
-			/* get the fieldtab even further down */
-			@i @FieldDef.0.fieldtab@ = @StuctFieldDef.0.fieldtab@;
-			@i @FieldDef.0.structname@ = @StuctFieldDef.0.structname@;
-		@}
-	;
+Ids: 
 
-FieldDef: /* empty */
-		/* well, we don't have any field definitions here, so there is nothing to add */
-	| FieldList
+	| Ids IDENTIFIER
 		@{
-			/* and yet even further down */
-			@i @FieldList.0.fieldtab@ = @FieldDef.0.fieldtab@;
-			@i @FieldList.0.structname@ = @FieldDef.0.structname@;
+			@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
+			@i @Ids.1.structname@ = @Ids.0.structname@;
 		@}
 	;
 	
-FieldList: IDENTIFIER
-		@{	
-			/* add the field name to the field list, but only if field name is unique */
-			@pre symtab_checkdup( @FieldList.0.fieldtab@, @IDENTIFIER.name@);
-			@pre symtab_add( @FieldList.0.fieldtab@, @IDENTIFIER.name@, @FieldList.0.structname@);
-		@}
-	| FieldList IDENTIFIER
-		@{
-			/* add the field name to the field list, but only if field name is unique */
-			@pre symtab_checkdup( @FieldList.0.fieldtab@, @IDENTIFIER.name@);
-			@pre symtab_add( @FieldList.0.fieldtab@, @IDENTIFIER.name@, @FieldList.0.structname@);
-			
-			/* we will still need this further down */
-			@i @FieldList.1.fieldtab@ = @FieldList.0.fieldtab@;
-			@i @FieldList.1.structname@ = @FieldList.0.structname@;
-		@}
-	;
-		
-Structdef: STRUCT IDENTIFIER StuctFieldDef END
-		@{
-			/* check if there already is a struct with this name */
-			@pre symtab_checkdup(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
-			
-			/* add the struct name if all went well */
-			@pre symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
-			
-			/* get the fieldtab down to the field definitions */
-			@i @StuctFieldDef.0.fieldtab@ = @Structdef.0.fieldtab@;
-			
-			/* the name of this struct is needed by the field --> get it down */
-			@i @StuctFieldDef.0.structname@ = @IDENTIFIER.0.name@;
-		@}
-	;
-
-Funcdef: FUNC IDENTIFIER '(' ParamDef ')' Stats END
+Funcdef: FUNC IDENTIFIER '(' Ids ')' Stats END
 		@{ 	
-			/* the parameters are visible within the function --> 
-			 * get the new vartab (by the ParamList) down the tree */
-			@i @Stats.vartab@ = @ParamDef.vartab@;
 			
+			@i @Ids.tab@ = symtab_init();
+			@i @Ids.structname@ = NULL; // will be handled by the symtab_add function
+			
+			/* the parameters are visible within the function --> 
+			 * get the new vartab (by the Ids) down the tree */
+			@i @Stats.vartab@ = @Ids.tab@;
+		
 			/* these come from the Def, are globally visible and may be 
 			 * needed in the Stats as well --> get them down too! */
 			@i @Stats.0.structtab@ = @Funcdef.0.structtab@;
@@ -249,87 +191,24 @@ Funcdef: FUNC IDENTIFIER '(' ParamDef ')' Stats END
 		@}
 	;
 
+	
 Stats: /* empty */
 		/* there ain't no more to do */
-	| Stats Stat ';' 		
+	| Stat ';' Stats		
 		@{ 	
 			/* just distributing - move along please */
-			@i @Stats.1.structtab@ = @Stats.0.structtab@;
-			@i @Stat.0.structtab@  = @Stats.0.structtab@;
-			
-			@i @Stats.1.fieldtab@ = @Stats.0.fieldtab@;
+	
+			@i @Stat.0.structtab@ = @Stats.0.structtab@;
 			@i @Stat.0.fieldtab@  = @Stats.0.fieldtab@;
-			
-			@i @Stats.1.vartab@ = @Stats.0.vartab@;
-			@i @Stat.0.vartab@  = @Stats.0.vartab@;
+			@i @Stat.0.vartab@    = @Stats.0.vartab@;
+	
+			@i @Stats.1.structtab@ = @Stat.0.structtab@;
+			@i @Stats.1.fieldtab@  = @Stat.0.fieldtab@;
+			@i @Stats.1.vartab@    = @Stat.0.vartab@;
+	
 		@}
 	;
 	
-Condlist:  /* empty */ 
-		/* there ain't no more to do */
-	| Condlist Expr THEN Stats END ';'
-		@{
-			/* distribute everything to the condlist */
-			@i @Condlist.1.structtab@ = @Condlist.0.structtab@;
-			@i @Condlist.1.fieldtab@  = @Condlist.0.fieldtab@;
-			@i @Condlist.1.vartab@ 	  = @Condlist.0.vartab@;
-				
-			/* distribute everything to the Stats */
-			@i @Stats.0.structtab@ = @Condlist.0.structtab@;
-			@i @Stats.0.fieldtab@  = @Condlist.0.fieldtab@;
-			@i @Stats.0.vartab@	   = @Condlist.0.vartab@;	
-				
-			/* the Expr doesn't need to know the structs (at least i hope so) */	
-			@i @Expr.0.fieldtab@  = @Condlist.0.fieldtab@;
-			@i @Expr.0.vartab@	  = @Condlist.0.vartab@;
-		@}
-	;
-	
-/* this construct merely exists to avoid a conflict when trying to destinct 
- * between the LET definitons and a Lexpr=Expt Statement */
-LetDef: LET LetParamDef
-		@{
-			@i @LetParamDef.vartab@   = @LetDef.vartab@;
-			@i @LetParamDef.fieldtab@ = @LetDef.fieldtab@;
-		@}
-	;
-	
-LetParamDef:  
-		/* there ain't no more to do */
-	| LetList
-		@{
-			/* propagate Stats vartab down the tree */
-			@i @LetList.0.vartab@	= @LetParamDef.0.vartab@;
-			@i @LetList.0.fieldtab@ = @LetParamDef.0.fieldtab@;
-		@}
-	;
-
-LetList: IDENTIFIER '=' Expr 
-		@{			
-			/* now we define a new variable */
-			@pre symtab_checkdup( @LetList.0.vartab@, @IDENTIFIER.0.name@);
-			@pre symtab_add( @LetList.0.vartab@, @IDENTIFIER.0.name@);
-			
-			/* this may be needed further down */
-			@i @Expr.0.vartab@   = @LetList.0.vartab@;
-			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
-		@}
-	| LetList IDENTIFIER '=' Expr  ';'
-		@{
-			/* now we define a new variable */
-			@pre symtab_checkdup( @LetList.0.vartab@, @IDENTIFIER.0.name@);
-			@pre symtab_add( @LetList.0.vartab@, @IDENTIFIER.0.name@);
-			
-			/* this may be needed by the Expr further down */
-			@i @Expr.0.vartab@   = @LetList.0.vartab@;
-			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
-			
-			/* and of course, the next LetList will need this as well */
-			@i @LetList.1.vartab@   = @LetList.0.vartab@;
-			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
-		@}
-	; 
-
 Stat: RETURN Expr
 		@{
 			/* I could open a distribution business by now... */
@@ -346,24 +225,18 @@ Stat: RETURN Expr
 	| LetDef IN Stats END
 		@{ 
 			/* in here new variables may be added - fork the vartab to ensure visibility scope */
-			@i @LetDef.0.vartab@ = symtab_init();
-			@pre symtab_dup( @Stat.0.vartab@, @LetDef.0.vartab@);
-			
-			/* the new vartab is visible in the following Stats */
-			@i @Stats.0.vartab@ = @LetDef.0.vartab@;
-			
-			/* and the fieldtab may be needed as well */
-			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
+			@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
+			@i @LetDef.0.fieldtab@; = @Stat.0.fieldtab@;
+		
+			@i @Stats.0.vartab@    = @LetDef.0.vartab@;
 			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
-			
-			/* and the Stats may define a with block even now --> get down the structtab */
 			@i @Stats.0.structtab@ = @Stat.0.structtab@;
 		@}
 	| WITH Expr ':' IDENTIFIER DO Stats END
 		@{
 			/* check if IDENTIFIER is a valid struct */
-			@pre symtab_isdef( @Stat.0.structtab@, @IDENTIFIER.0.name@);
-			
+			@checkscope symtab_isdef( @Stat.0.structtab@, @IDENTIFIER.0.name@);
+		
 			/* good! now get all fields of the struct into a new symtab
 			 * --> these will be added to the varscope of the with-block.  
 			 * yet, we will need the already defined variables as well, so
@@ -371,49 +244,94 @@ Stat: RETURN Expr
 			 * NOTE: the result will be in arg2 (so the return * of the function 
 			 * -- a new symtab to ensure scope), and the elements of arg1 will be
 			 * appended as copies, so no mixup with the original elements */
-			@pre @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
-			
+			@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
+		
 			/* and we have to pass things on as well */
 			@i @Stats.fieldtab@  = @Stat.fieldtab@;
 			@i @Stats.structtab@ = @Stat.structtab@;
-			
+		
 			@i @Expr.vartab@   = @Stat.vartab@;
 			@i @Expr.fieldtab@ = @Stat.fieldtab@;
 		@}
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 		@{
 			/* onwards down the tree! */
-			@i @Lexpr.vartab@ = @Stat.vartab@;
+			@i @Lexpr.0.vartab@   = @Stat.0.vartab@;
+			@i @Lexpr.0.fieldtab@ = @Stat.0.fieldtab@;
+		
+			/*
 			@i @Expr.vartab@  = @Stat.vartab@;	
-				
-			@i @Lexpr.fieldtab@ = @Stat.fieldtab@;
 			@i @Expr.fieldtab@  = @Stat.fieldtab@;
+			*/
+			@i @Expr.0.vartab@   = @Stat.0.vartab@;	
+			@i @Expr.0.fieldtab@ = @Stat.0.fieldtab@;
 		@}
 	| Term
 		@{
 			/* down the rabbit hole! */
-			@i @Term.vartab@ 	= @Stat.vartab@;
-			@i @Term.fieldtab@ = @Stat.fieldtab@;	
+			@i @Term.0.vartab@   = @Stat.0.vartab@;	
+			@i @Term.0.fieldtab@ = @Stat.0.vartab@;	
 		@}
 	;
-	
+
+Condlist:  /* empty */ 
+		/* there ain't no more to do */
+	| Condlist Expr THEN Stats END ';'
+		@{
+			/* distribute everything to the condlist */
+			@i @Condlist.1.structtab@ = @Condlist.0.structtab@;
+			@i @Condlist.1.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Condlist.1.vartab@ 	  = @Condlist.0.vartab@;
+			
+			/* distribute everything to the Stats */
+			@i @Stats.0.structtab@ = @Condlist.0.structtab@;
+			@i @Stats.0.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Stats.0.vartab@	   = @Condlist.0.vartab@;	
+			
+			/* the Expr doesn't need to know the structs (at least i hope so) */	
+			@i @Expr.0.fieldtab@  = @Condlist.0.fieldtab@;
+			@i @Expr.0.vartab@	  = @Condlist.0.vartab@;
+		@}
+	;
+
+/* this construct merely exists to avoid a conflict when trying to destinct 
+ * between the LET definitons and a Lexpr=Expt Statement */
+LetDef: LET LetList
+		@{
+			@i @LetList.vartab@   = @LetDef.vartab@;
+			@i @LetList.fieldtab@ = @LetDef.fieldtab@;
+		@}
+	;
+
+LetList: 
+
+	| LetList IDENTIFIER '=' Expr  ';'
+		@{
+			@i @LetList.1.vartab@ = symtab_add( @LetList.0.vartab@, @IDENTIFIER.0.name@);
+			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
+		
+			@i @Expr.0.vartab@   = @LetList.0.vartab@;
+			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
+		@}
+	; 
+
 Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/ 
 		@{
 			/* check if IDENTIFIER is a defined field */
-			@pre symtab_isdef( @Lexpr.0.fieldtab@, @IDENTIFIER.0.name@);
-				
+			@checkscope symtab_isdef( @Lexpr.fieldtab@, @IDENTIFIER.0.name@);
+			
 			/* and as always there is stuff to get down */
 			@i @Term.vartab@ 	= @Lexpr.vartab@;
 			@i @Term.fieldtab@  = @Lexpr.fieldtab@;	
 		@}
-	
+
 	| IDENTIFIER  /* Schreibender Variablenzugriff 	*/ 
 		@{
 			/* check if IDENTIFIER is a visible variable */
-			@pre symtab_isdef( @Lexpr.0.vartab@, @IDENTIFIER.0.name@);
+			@checkscope symtab_isdef( @Lexpr.vartab@, @IDENTIFIER.0.name@);
 		@}
 	;
-	
+
 Notexpr: '-' Term
 		@{
 			@i @Term.vartab@   = @Notexpr.vartab@;
@@ -435,12 +353,12 @@ Notexpr: '-' Term
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 		@}
 	;
-	
+
 Addexpr: Term '+' Term
 		@{
 			@i @Term.0.vartab@ = @Addexpr.0.vartab@;
 			@i @Term.1.vartab@ = @Addexpr.0.vartab@;
-			
+		
 			@i @Term.0.fieldtab@ = @Addexpr.0.fieldtab@;
 			@i @Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
 		@}	
@@ -448,17 +366,17 @@ Addexpr: Term '+' Term
 		@{
 			@i @Term.0.vartab@    = @Addexpr.0.vartab@;
 			@i @Addexpr.1.vartab@ = @Addexpr.0.vartab@;
-		
+	
 			@i @Term.0.fieldtab@    = @Addexpr.0.fieldtab@;
 			@i @Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
 		@}	
 	;
-	
+
 Mulexpr: Term '*' Term
 		@{
 			@i @Term.0.vartab@ = @Mulexpr.0.vartab@;
 			@i @Term.1.vartab@ = @Mulexpr.0.vartab@;
-	
+
 			@i @Term.0.fieldtab@ = @Mulexpr.0.fieldtab@;
 			@i @Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 		@}	
@@ -471,7 +389,7 @@ Mulexpr: Term '*' Term
 			@i @Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 		@}	
 	;
-	
+
 Orexpr: Term OR Term
 		@{
 			@i @Term.0.vartab@ = @Orexpr.0.vartab@;
@@ -514,7 +432,7 @@ Expr: Notexpr
 		@{
 			@i @Term.0.vartab@   = @Expr.0.vartab@;
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
-			
+		
 			@i @Term.1.vartab@   = @Expr.0.vartab@;
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 		@}
@@ -522,7 +440,7 @@ Expr: Notexpr
 		@{
 			@i @Term.0.vartab@   = @Expr.0.vartab@;
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
-		
+	
 			@i @Term.1.vartab@   = @Expr.0.vartab@;
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 		@}
@@ -532,7 +450,7 @@ Expr: Notexpr
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	;
-	
+
 ExprList: /* empty */
 		/* there ain't no more to do */
 	| ExprList Expr ','
@@ -540,12 +458,12 @@ ExprList: /* empty */
 			/* we didn't have anything to get down for quite a while */
 			@i @ExprList.1.vartab@ = @ExprList.0.vartab@;
 			@i @Expr.0.vartab@ 	   = @ExprList.0.vartab@;
-				
+			
 			@i @ExprList.1.fieldtab@ = @ExprList.0.fieldtab@;
 			@i @Expr.0.fieldtab@ 	 = @ExprList.0.fieldtab@;
 		@}
 	; 
-	
+
 FinalArg: /* empty */
 		/* there ain't no more to do */
 	| Expr
@@ -554,7 +472,7 @@ FinalArg: /* empty */
 			@i @Expr.fieldtab@ = @FinalArg.fieldtab@;
 		@}
 	; 
-		
+	
 Term: '(' Expr ')'
 		@{
 			@i @Expr.vartab@   = @Term.vartab@;
@@ -565,8 +483,8 @@ Term: '(' Expr ')'
 	| Term '.' IDENTIFIER  /* Lesender Feldzugriff */
 		@{
 			/* check if IDENTIFIER is a defined field */
-			@pre symtab_isdef( @Term.0.fieldtab@, @IDENTIFIER.0.name@);
-			
+			@checkscope symtab_isdef( @Term.0.fieldtab@, @IDENTIFIER.0.name@);
+		
 			/* and as always there is stuff to get down */
 			@i @Term.1.vartab@   = @Term.0.vartab@;
 			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
@@ -574,14 +492,14 @@ Term: '(' Expr ')'
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{
 			/* check if IDENTIFIER is a defined variable */
-			@pre symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
+			@checkscope symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
 		@}
 	| IDENTIFIER '(' /*{ Expr ',' }*/ ExprList FinalArg ')' 	/* Funktionsaufruf */ 
 		@{
 			/* IDENTIFIER is the name of the function --> ignore */
 			@i @ExprList.vartab@ = @Term.vartab@;
 			@i @FinalArg.vartab@ 	 = @Term.vartab@;
-			
+		
 			@i @ExprList.fieldtab@ = @Term.fieldtab@;
 			@i @FinalArg.fieldtab@	   = @Term.fieldtab@;
 		@}
@@ -635,9 +553,14 @@ symtab *symtab_add(symtab *tab, char *name)
 
 symtab *symtab_add(symtab *tab, char *name, char *ref)
 {
+	
+	/* check if variable is already defined */
+	symtab_checkdup(tab, name);
+	
+	/* ok, now lets add the new entry */
 	symtabentry *entry = stentry_init();
 	entry->name = strdup(name);
-	
+
 	/* strdup(NULL) is very undefined and not to be trusted */
 	if(ref != NULL)
 		entry->ref = strdup(ref);
@@ -765,5 +688,7 @@ symtabentry *stentry_find(symtab *tab, char *name)
 	}
 	return match;
 }
+
+
 
 

@@ -2,7 +2,8 @@
 %{  /* Definitions */
 
 #include <stdio.h>
-/*#include "grammar.tab.h"*/
+#include <stdlib.h>
+#include <string.h>
 #include "oxout.tab.h"
 
 extern void lexerror(int);
@@ -51,12 +52,12 @@ or		{ return OR; 	 };
 
 "<>"		{ return NOTEQUAL; };
 
-{DECNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 10); return NUMBER; };
-{HEXNUMBER}	{ yylval.nval = (signed long) strtol( yytext, NULL, 16); return NUMBER; };
+{DECNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 10);*/ return NUMBER; };
+{HEXNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 16);*/ return NUMBER; };
 
 {IDENTIFIER}	{ return IDENTIFIER; @{ @IDENTIFIER.name@ = strdup(yytext); @} };
 
-{OTHER}		{ lexerror(yylineno); }
+{OTHER}		{ lexerror(yylineno); };
 
 %% /* Code */
 
