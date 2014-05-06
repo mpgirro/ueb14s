@@ -73,7 +73,7 @@ extern FILE* yyin;
 @attributes { char *name; } IDENTIFIER
 @attributes { symtab *structtab; symtab *fieldtab; } 					Program
 @attributes { symtab *structtab; symtab *fieldtab; }					Def
-@attributes { symtab *structtab; symtab *fieldtab; symtab *ignoretab; }					Structdef
+@attributes { symtab *structtab; symtab *fieldtab; /*symtab *ignoretab;*/ }					Structdef
 @attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
 @attributes { symtab *tab; char *structname; } 							Ids
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
@@ -110,42 +110,54 @@ Program: /* empty */
 		@{
 			/* the structtab and fieldtab got initialised by an empty program nonterminal
 			 * --> propagate them to the parent program and the definitions now */
-			@i @Program.0.structtab@ = @Program.1.structtab@;
-			@i @Program.0.fieldtab@  = @Program.1.fieldtab@;
+			//@i @Program.0.structtab@ = @Program.1.structtab@;
+			//@i @Program.0.fieldtab@  = @Program.1.fieldtab@;
 			
-			@i @Def.0.structtab@ = @Program.1.structtab@;
-			@i @Def.0.fieldtab@  = @Program.1.fieldtab@;
+			//@i @Def.0.structtab@ = @Program.1.structtab@;
+			//@i @Def.0.fieldtab@  = @Program.1.fieldtab@;
+			
+			@i @Program.0.structtab@ = symtab_merge( @Program.1.structtab@, @Def.structtab@ );
+			@i @Program.0.fieldtab@  = symtab_merge( @Program.1.fieldtab@, @Def.fieldtab@ );
 		@}
 	; 
 
 Def: Funcdef
 		@{
 			/* propagate the struct and field sym table to every function def */
-			@i @Funcdef.0.structtab@ = @Def.0.structtab@;
-			@i @Funcdef.0.fieldtab@  = @Def.0.fieldtab@;
+			//@i @Funcdef.0.structtab@ = @Def.0.structtab@;
+			//@i @Funcdef.0.fieldtab@  = @Def.0.fieldtab@;
+			@i @Def.0.structtab@ = @Funcdef.0.structtab@;
+			@i @Def.0.fieldtab@  = @Funcdef.0.fieldtab@;
 		@}
 	| Structdef
 		@{
 			/* propagate the struct and field table to the every struct def */
-			@i @Structdef.0.structtab@ = @Def.0.structtab@;
-			@i @Structdef.0.fieldtab@  = @Def.0.fieldtab@;
+			//@i @Structdef.0.structtab@ = @Def.0.structtab@;
+			//@i @Structdef.0.fieldtab@  = @Def.0.fieldtab@;
+			@i @Def.0.structtab@ = @Structdef.0.structtab@;
+			@i @Def.0.fieldtab@  = @Structdef.0.fieldtab@;
 		@}
 	;
 	
 Structdef: STRUCT IDENTIFIER ':' Ids END
 		@{
-			
-			@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
-			@i @Ids.tab@ = @Structdef.0.fieldtab@;
+			@i @Structdef.structtab@ = symtab_add( symtab_init(), @IDENTIFIER.0.name@, NULL);
+			//@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
+			@i @Structdef.0.fieldtab@ = @Ids.tab@;
+			//@i @Ids.tab@ = @Structdef.0.fieldtab@;
 			@i @Ids.structname@ = @IDENTIFIER.0.name@;
 		@}
 	;
 	
 Ids: 
+		@{
+			@i @Ids.tab@ = symtab_init();
+		@}
 
 	| Ids IDENTIFIER
 		@{
-			@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
+			//@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
+			@i @Ids.0.tab@ = symtab_add( @Ids.1.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
 			@i @Ids.1.structname@ = @Ids.0.structname@;
 		@}
 	;
@@ -153,7 +165,10 @@ Ids:
 Funcdef: FUNC IDENTIFIER '(' Ids ')' Stats END
 		@{ 	
 			
-			@i @Ids.tab@ = symtab_init();
+			@i @Funcdef.0.structtab@ = symtab_init();
+			@i @Funcdef.0.fieldtab@  = symtab_init();
+			
+			//@i @Ids.tab@ = symtab_init();
 			@i @Ids.structname@ = NULL; // will be handled by the symtab_add function
 			
 			/* the parameters are visible within the function --> 
@@ -552,12 +567,16 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 {
 	symtabentry *cursor;
 	symtabentry *copy;
+	printf("duplicating symtab\n");
 	if(src->first != NULL) 
 	{
 		cursor = src->first;
 		while(cursor != NULL) 
 		{
 			copy = stentry_dup(cursor);
+			
+			printf("making a copy of %s\n", cursor->name);
+			
 			if(dest->first == NULL) 
 			{
 				dest->first = copy;
@@ -568,7 +587,9 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 			}
 			cursor = cursor->next;
 		}
+		
 	}
+	printf("duplication finished\n");
 	return dest;
 }
 
@@ -578,10 +599,13 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 symtab *symtab_merge(symtab *tab1, symtab *tab2)
 {
 	symtabentry *cursor = tab1->first;
-	while(cursor != NULL) 
-	{
-		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
-		cursor = cursor->next;
+	if( tab1 != NULL )
+	{	
+		while(cursor != NULL) 
+		{
+			stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
+			cursor = cursor->next;
+		}
 	}
 	return tab2;
 }
