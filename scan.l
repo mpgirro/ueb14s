@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "oxout.tab.h"
+#include "symtab.h"
+
 
 extern void lexerror(int);
 void process_comment(char *comment);

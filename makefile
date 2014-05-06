@@ -20,7 +20,7 @@ ox:	$(SRCS_FILES)
 	
 # creates oxout.tab.h oxout.tab.c
 bison: ox
-	bison -d oxout.y
+	bison -d -v oxout.y
 	
 # creates lex.yy.c
 flex: ox

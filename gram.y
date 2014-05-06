@@ -6,42 +6,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "symtab.h"
 
 /* === constants === */
 
 #define LEXICAL_ERROR 	1
 #define SYNTAX_ERROR 	2
-#define OTHER_ERROR		3 	/* use of non visible name, etc. */
-
-/* === structs === */
-
-struct symboltable_entry{
-	char *name;
-
-	/* if field entry this is the name  of the
-	 * struct this field belongs to, NULL else */
-	char *ref;  
-	struct symboltable_entry *next;	
-} symtabentry;
-
-struct symboltable{
-	symtabentry *first;
-	symtabentry *last;
-} symtab;
+#define SEMANTIC_ERROR	3 	/* use of non visible name, etc. */
+	
 
 /* === function signatures === */
-
-extern int yylex();
-extern int yyparse();
 
 /* error handling functions */
 void lexerror(int);
 void yyerror(const char *msg);
-void othererror(void);
+void semanticerror(void);
 
 /* symbol table maintainance */
 symtab *symtab_init(void);
-symtab *symtab_add(symtab *tab, char *name);
 symtab *symtab_add(symtab *tab, char *name, char *ref);
 symtab *symtab_dup(symtab *src, symtab *dest);
 symtab *symtab_merge(symtab *tab1, symtab *tab2);
@@ -54,6 +36,8 @@ symtabentry *stentry_append(symtab *tab, symtabentry *entry);
 symtabentry *stentry_dup(symtabentry *entry);
 symtabentry *stentry_find(symtab *tab, char *name);
 
+extern int yylex();
+extern int yyparse();
 
 /* === global variables === */
 
@@ -90,15 +74,12 @@ extern FILE* yyin;
 @attributes { symtab *structtab; symtab *fieldtab; } 					Program
 @attributes { symtab *structtab; symtab *fieldtab; }					Def
 @attributes { symtab *structtab; symtab *fieldtab; symtab *ignoretab; }					Structdef
-//@attributes { symtab *fieldtab; char *structname; }						StuctFieldDef
-//@attributes { symtab *fieldtab; char *structname; }						FieldDef
 @attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
 @attributes { symtab *tab; char *structname; } 							Ids
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Condlist
-@attributes { symtab *fieldtab; symtab *vartab; }						LetDef
-@attributes { symtab *fieldtab; symtab *vartab; }						LetParamDef
+@attributes { symtab *fieldtab; symtab *vartab;  }						LetDef
 @attributes { symtab *fieldtab; symtab *vartab; }						LetList
 @attributes { symtab *fieldtab; symtab *vartab; }						Lexpr
 @attributes { symtab *fieldtab; symtab *vartab; }						Notexpr
@@ -110,11 +91,6 @@ extern FILE* yyin;
 @attributes { symtab *fieldtab; symtab *vartab; }						FinalArg
 @attributes { symtab *fieldtab; symtab *vartab; }						Term
 
-	
-// semantic checks of function definitions
-// (duplicate parameters)
-@traversal @lefttoright @preorder fillscope
-// checks if an identifier is in scope
 @traversal @lefttoright @postorder checkscope
 
 %%
@@ -159,7 +135,7 @@ Def: Funcdef
 Structdef: STRUCT IDENTIFIER ':' Ids END
 		@{
 			
-			@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@);
+			@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
 			@i @Ids.tab@ = @Structdef.0.fieldtab@;
 			@i @Ids.structname@ = @IDENTIFIER.0.name@;
 		@}
@@ -222,12 +198,12 @@ Stat: RETURN Expr
 			@i @Condlist.0.fieldtab@  = @Stat.0.fieldtab@;
 			@i @Condlist.0.vartab@ 	  = @Stat.0.vartab@;
 		@}
-	| LetDef IN Stats END
+	| LET LetDef IN Stats END
 		@{ 
 			/* in here new variables may be added - fork the vartab to ensure visibility scope */
 			@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
-			@i @LetDef.0.fieldtab@; = @Stat.0.fieldtab@;
-		
+			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
+			
 			@i @Stats.0.vartab@    = @LetDef.0.vartab@;
 			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
 			@i @Stats.0.structtab@ = @Stat.0.structtab@;
@@ -259,10 +235,6 @@ Stat: RETURN Expr
 			@i @Lexpr.0.vartab@   = @Stat.0.vartab@;
 			@i @Lexpr.0.fieldtab@ = @Stat.0.fieldtab@;
 		
-			/*
-			@i @Expr.vartab@  = @Stat.vartab@;	
-			@i @Expr.fieldtab@  = @Stat.fieldtab@;
-			*/
 			@i @Expr.0.vartab@   = @Stat.0.vartab@;	
 			@i @Expr.0.fieldtab@ = @Stat.0.fieldtab@;
 		@}
@@ -295,23 +267,26 @@ Condlist:  /* empty */
 	;
 
 /* this construct merely exists to avoid a conflict when trying to destinct 
- * between the LET definitons and a Lexpr=Expt Statement */
+ * between the LET definitons and a Lexpr=Expt Statement
 LetDef: LET LetList
 		@{
 			@i @LetList.vartab@   = @LetDef.vartab@;
 			@i @LetList.fieldtab@ = @LetDef.fieldtab@;
 		@}
 	;
+ */
+LetDef: 
 
-LetList: 
-
-	| LetList IDENTIFIER '=' Expr  ';'
+	| LetDef IDENTIFIER '=' Expr  ';' 
 		@{
-			@i @LetList.1.vartab@ = symtab_add( @LetList.0.vartab@, @IDENTIFIER.0.name@);
-			@i @LetList.1.fieldtab@ = @LetList.0.fieldtab@;
+			
+			@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
+			
+			/* liegt hier der hase im pfeffer vergraben? */
+			@i @LetDef.1.fieldtab@ = @LetDef.0.fieldtab@;
 		
-			@i @Expr.0.vartab@   = @LetList.0.vartab@;
-			@i @Expr.0.fieldtab@ = @LetList.0.fieldtab@;
+			@i @Expr.0.vartab@   = @LetDef.0.vartab@;
+			@i @Expr.0.fieldtab@ = @LetDef.0.fieldtab@;
 		@}
 	; 
 
@@ -498,10 +473,10 @@ Term: '(' Expr ')'
 		@{
 			/* IDENTIFIER is the name of the function --> ignore */
 			@i @ExprList.vartab@ = @Term.vartab@;
-			@i @FinalArg.vartab@ 	 = @Term.vartab@;
+			@i @FinalArg.vartab@ = @Term.vartab@;
 		
 			@i @ExprList.fieldtab@ = @Term.fieldtab@;
-			@i @FinalArg.fieldtab@	   = @Term.fieldtab@;
+			@i @FinalArg.fieldtab@ = @Term.fieldtab@;
 		@}
 	;
 
@@ -538,17 +513,18 @@ void lexerror(int line)
 	exit(LEXICAL_ERROR);
 }
 
+void semanticerror(void)
+{
+	(void) fprintf(stderr, "semantic error\n");
+	exit(SEMANTIC_ERROR);
+}
+
 symtab *symtab_init(void)
 {
-	symtable *tab = malloc(sizeof(symtable));
+	symtab *tab = malloc(sizeof(symtab));
 	tab->first = NULL;
 	tab->last = NULL;
 	return tab;
-}
-
-symtab *symtab_add(symtab *tab, char *name)
-{
-	return symtab_add(tab, name, NULL);
 }
 
 symtab *symtab_add(symtab *tab, char *name, char *ref)
@@ -629,7 +605,7 @@ void symtab_checkdup(symtab *tab, char *name)
 	symtabentry *entry = stentry_find(tab, name);
 	if(entry != NULL) {
 		(void) fprintf(stderr, "duplicate names found: %s\n", name);
-		othererror();
+		semanticerror();
 	}
 }
 
@@ -641,7 +617,7 @@ void symtab_isdef(symtab *tab, char *name)
 	symtabentry *entry = stentry_find(tab, name);
 	if(entry == NULL) {
 		(void) fprintf(stderr, "symbol not defined in scope: %s\n", name);
-		othererror();
+		semanticerror();
 	}
 }
 
