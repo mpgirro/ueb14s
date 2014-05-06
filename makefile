@@ -4,6 +4,7 @@ BISON_FILES = oxout.tab.h oxout.tab.c
 FLEX_FILES = lex.yy.c
 OBJECT_FILES = ox.o lex.o
 SRCS_FILES = gram.y scan.l
+ABGABE_FILES = gram.y scan.l symtab.h
 
 .PHONY: all clean
 
@@ -36,4 +37,4 @@ ag: ox.o lex.o
 	gcc ox.o lex.o -lfl -o ag
 	
 abgabe:
-	cp makefile $(SRCS_FILES) ~/abgabe/ag/
+	cp makefile $(ABGABE_FILES) ~/abgabe/ag/
