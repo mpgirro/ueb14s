@@ -4,7 +4,7 @@ cd ../
 make clean
 make
 
-for filename in ./tests/*
+for filename in tests/*
 do
     ./ag < $filename >/dev/null 2>/dev/null
 
