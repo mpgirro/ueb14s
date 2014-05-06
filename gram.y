@@ -30,6 +30,7 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2);
 symtab *symtab_subtab(symtab *ftab, char *name);
 void symtab_checkdup(symtab *tab, char *name);
 void symtab_isdef(symtab *tab, char *name);
+void symtab_print(symtab *tab);
 
 symtabentry *stentry_init(void);
 symtabentry *stentry_append(symtab *tab, symtabentry *entry);
@@ -529,10 +530,6 @@ symtab *symtab_init(void)
 
 symtab *symtab_add(symtab *tab, char *name, char *ref)
 {
-	
-	/* check if variable is already defined */
-	symtab_checkdup(tab, name);
-	
 	/* ok, now lets add the new entry */
 	symtabentry *entry = stentry_init();
 	entry->name = strdup(name);
@@ -577,12 +574,22 @@ symtab *symtab_dup(symtab *src, symtab *dest)
  */
 symtab *symtab_merge(symtab *tab1, symtab *tab2)
 {
+	printf("merging tabs\n");
+	printf("============\n");
+	printf("tab1:\n");
+	symtab_print(tab1);
+	printf("tab2:\n");
+	symtab_print(tab2);
+	
 	symtabentry *cursor = tab1->first;
 	while(cursor != NULL) 
 	{
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
 		cursor = cursor->next;
 	}
+	printf("resulttab:\n");
+	symtab_print(tab2);
+	printf("merging complete\n");
 	return tab2;
 }
 
@@ -592,6 +599,7 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 symtab *symtab_subtab(symtab *tab, char *name)
 {
 	symtab *ntab = symtab_init(); /* fields of struct */
+	printf("subbing tab\n");
 	if(name != NULL)
 	{
 		symtabentry *cursor = tab->first;
@@ -599,11 +607,13 @@ symtab *symtab_subtab(symtab *tab, char *name)
 		{
 			if(strcmp(name, cursor->ref) == 0) 
 			{
+				printf("adding %s\n", cursor->name);
 				stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
 			}
 			cursor = cursor->next;
 		}
 	}
+	printf("subbing complete\n");
 	return ntab;
 }
 
@@ -633,6 +643,18 @@ void symtab_isdef(symtab *tab, char *name)
 	}
 }
 
+void symtab_print(symtab *tab){
+	
+	symtabentry *cursor = tab->first;
+	printf("printing tab\n");
+	while(cursor != NULL) 
+	{
+		printf("entry: %s\n", cursor->name);
+		cursor = cursor->next;
+	}
+	printf("printing complete\n");
+}
+
 symtabentry *stentry_init(void)
 {
 	symtabentry *entry = malloc(sizeof(symtabentry));
@@ -643,6 +665,10 @@ symtabentry *stentry_init(void)
 /* append a entry to the symbol table at the first position */
 symtabentry *stentry_append(symtab *tab, symtabentry *entry)
 {
+	
+	/* check if variable is already defined */
+	symtab_checkdup(tab, entry->name);
+	
 	if(tab->first == NULL) 
 	{
 		tab->first = entry;
