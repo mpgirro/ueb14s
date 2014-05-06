@@ -550,20 +550,23 @@ symtab *symtab_add(symtab *tab, char *name, char *ref)
 /* make an exact duplicate (copy) of symbol table src into dest */
 symtab *symtab_dup(symtab *src, symtab *dest)
 {
-	symtabentry *entry;
+	symtabentry *cursor;
 	symtabentry *copy;
-	if(src->first != NULL) {
-		entry = src->first;
-		while(entry != NULL) {
-			copy = stentry_dup(entry);
-			if(dest->first == NULL) {
+	if(src->first != NULL) 
+	{
+		cursor = src->first;
+		while(cursor != NULL) 
+		{
+			copy = stentry_dup(cursor);
+			if(dest->first == NULL) 
+			{
 				dest->first = copy;
 				dest->last 	= copy;
 			} else {
 				dest->last->next = copy;
 				dest->last = copy;
 			}
-			entry = entry->next;
+			cursor = cursor->next;
 		}
 	}
 	return dest;
@@ -575,8 +578,10 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 symtab *symtab_merge(symtab *tab1, symtab *tab2)
 {
 	symtabentry *cursor = tab1->first;
-	while(cursor != NULL) {
+	while(cursor != NULL) 
+	{
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
+		cursor = cursor->next;
 	}
 	return tab2;
 }
@@ -584,17 +589,22 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 /* search all entries of a symtab for element having a *ref equal to 'name'
  * returns a new symtab with these elements, all elements are copies of there originals
  */
-symtab *symtab_subtab(symtab *ftab, char *name)
+symtab *symtab_subtab(symtab *tab, char *name)
 {
-	symtab *fstab = symtab_init(); /* fields of struct */
-	symtabentry *cursor = ftab->first;
-	while(cursor != NULL) {
-		if(strcmp(name, cursor->ref) == 0) {
-			stentry_append(fstab, stentry_dup(cursor)); /* append a copy! */
+	symtab *ntab = symtab_init(); /* fields of struct */
+	if(name != NULL)
+	{
+		symtabentry *cursor = tab->first;
+		while(cursor != NULL) 
+		{
+			if(strcmp(name, cursor->ref) == 0) 
+			{
+				stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
+			}
+			cursor = cursor->next;
 		}
-		cursor = cursor->next;
 	}
-	return fstab;
+	return ntab;
 }
 
 /*
@@ -603,7 +613,8 @@ symtab *symtab_subtab(symtab *ftab, char *name)
 void symtab_checkdup(symtab *tab, char *name)
 {
 	symtabentry *entry = stentry_find(tab, name);
-	if(entry != NULL) {
+	if(entry != NULL) 
+	{
 		(void) fprintf(stderr, "duplicate names found: %s\n", name);
 		semanticerror();
 	}
@@ -615,7 +626,8 @@ void symtab_checkdup(symtab *tab, char *name)
 void symtab_isdef(symtab *tab, char *name)
 {
 	symtabentry *entry = stentry_find(tab, name);
-	if(entry == NULL) {
+	if(entry == NULL) 
+	{
 		(void) fprintf(stderr, "symbol not defined in scope: %s\n", name);
 		semanticerror();
 	}
@@ -631,10 +643,12 @@ symtabentry *stentry_init(void)
 /* append a entry to the symbol table at the first position */
 symtabentry *stentry_append(symtab *tab, symtabentry *entry)
 {
-	if(tab->first == NULL) {
+	if(tab->first == NULL) 
+	{
 		tab->first = entry;
 		tab->last = entry;
-	} else {
+	} else 
+	{
 		entry->next = tab->first;
 		tab->first = entry;
 	}
@@ -646,7 +660,12 @@ symtabentry *stentry_dup(symtabentry *entry)
 {
 	symtabentry *dup = stentry_init();
 	dup->name = strdup(entry->name);
-	dup->ref  = strdup(entry->ref);
+	
+	/* strdup(NULL) is very undefined and not to be trusted */
+	if(dup->ref != NULL)
+		dup->ref = strdup(entry->ref);
+	else 
+		dup->ref = NULL;
 	dup->next = NULL;
 	return dup;
 }
@@ -655,8 +674,10 @@ symtabentry *stentry_find(symtab *tab, char *name)
 {
 	symtabentry *match = NULL;
 	symtabentry *cursor = tab->first;
-	while(cursor != NULL) {
-		if(strcmp(name, cursor->name) == 0) {
+	while(cursor != NULL) 
+	{
+		if(strcmp(name, cursor->name) == 0) 
+		{
 			match = cursor;
 			break;
 		}
