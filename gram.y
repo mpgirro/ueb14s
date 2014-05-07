@@ -74,26 +74,27 @@ extern FILE* yyin;
 @attributes { char *name; } IDENTIFIER
 @attributes { symtab *structtab; symtab *fieldtab; } 					Program
 @attributes { symtab *structtab; symtab *fieldtab; }					Def
-@attributes { symtab *structtab; symtab *fieldtab; symtab *dummy1; symtab *dummy2; }					Structdef
+@attributes { symtab *structtab; symtab *fieldtab; symtab *dummy1; }	Structdef
 @attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
-@attributes { symtab *tab; char *structname; } 							Ids
+@attributes { symtab *tab; } 											ParamDef
 @attributes { symtab *fieldtab; char *structname; }						FieldDef
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Condlist
-@attributes { symtab *fieldtab; symtab *vartab;  }						LetDef
-@attributes { symtab *fieldtab; symtab *vartab; }						LetList
+@attributes { symtab *fieldtab; symtab *vartab; symtab *visscope; }		LetDef
 @attributes { symtab *fieldtab; symtab *vartab; }						Lexpr
-@attributes { symtab *fieldtab; symtab *vartab; }						Notexpr
-@attributes { symtab *fieldtab; symtab *vartab; }						Addexpr
-@attributes { symtab *fieldtab; symtab *vartab; }						Mulexpr
-@attributes { symtab *fieldtab; symtab *vartab; }						Orexpr
-@attributes { symtab *fieldtab; symtab *vartab; }						Expr
-@attributes { symtab *fieldtab; symtab *vartab; }						ExprList
-@attributes { symtab *fieldtab; symtab *vartab; }						FinalArg
-@attributes { symtab *fieldtab; symtab *vartab; }						Term
+@attributes { symtab *fieldtab; symtab *vartab; symtab *visscope; }						Notexpr
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Addexpr
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Mulexpr
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Orexpr
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Expr
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						ExprList
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						FinalArg
+@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Term
 
+@traversal @lefttoright @preorder waitwith
 @traversal @lefttoright @postorder checkscope
+
 
 %%
 	
@@ -134,16 +135,10 @@ Def: Funcdef
 		@}
 	;
 	
-Structdef: STRUCT IDENTIFIER ':' /*Ids*/ FieldDef END
+Structdef: STRUCT IDENTIFIER ':' FieldDef END
 		@{
 			
 			@i @Structdef.dummy1@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
-			
-			/* merge fields defined by Ids into public fieldtab */
-			//@i @Structdef.dummy2@ = symtab_merge( @Ids.tab@, @Structdef.fieldtab@);
-			//@i @Structdef.dummy1@ = NULL;
-			@i @Structdef.dummy2@ = NULL;
-			//@i @Ids.tab@ = @Structdef.0.fieldtab@;
 			@i @FieldDef.fieldtab@  = @Structdef.fieldtab@;
 			@i @FieldDef.structname@ = @IDENTIFIER.0.name@;
 		@}
@@ -159,28 +154,23 @@ FieldDef:
 	;
 	
 	
-Ids: 
+ParamDef: 
 		@{
-			@i @Ids.tab@ = symtab_init();
+			@i @ParamDef.tab@ = symtab_init();
 		@}
 		
-	| Ids IDENTIFIER
+	| ParamDef IDENTIFIER
 		@{
-			//@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
-			@i @Ids.0.tab@ = symtab_add( @Ids.1.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
-			@i @Ids.1.structname@ = @Ids.0.structname@;
+			//@i @ParamDef.1.tab@ = symtab_add( @ParamDef.0.tab@, @IDENTIFIER.name@, @ParamDef.0.structname@);
+			@i @ParamDef.0.tab@ = symtab_add( @ParamDef.1.tab@, @IDENTIFIER.name@, NULL);
 		@}
 	;
 	
-Funcdef: FUNC IDENTIFIER '(' Ids ')' Stats END
+Funcdef: FUNC IDENTIFIER '(' ParamDef ')' Stats END
 		@{ 	
-			
-			//@i @Ids.tab@ = symtab_init();
-			@i @Ids.structname@ = NULL; // will be handled by the symtab_add function
-			
 			/* the parameters are visible within the function --> 
-			 * get the new vartab (by the Ids) down the tree */
-			@i @Stats.vartab@ = @Ids.tab@;
+			 * get the new vartab (by the ParamDef) down the tree */
+			@i @Stats.vartab@ = @ParamDef.tab@;
 		
 			/* these come from the Def, are globally visible and may be 
 			 * needed in the Stats as well --> get them down too! */
@@ -211,6 +201,7 @@ Stat: RETURN Expr
 		@{
 			/* I could open a distribution business by now... */
 			@i @Expr.0.vartab@   = @Stat.0.vartab@;
+			@i @Expr.0.visscope@   = @Stat.0.vartab@;
 			@i @Expr.0.fieldtab@ = @Stat.0.fieldtab@;
 		@}
 	| COND Condlist END 
@@ -222,10 +213,14 @@ Stat: RETURN Expr
 		@}
 	| LET LetDef IN Stats END
 		@{ 
+			
+			/* to ensure scope in definitions, fork vartab */
+			@i @LetDef.0.visscope@ = symtab_dup(@Stat.0.vartab@, symtab_init());
+			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
+			
 			/* in here new variables may be added - fork the vartab to ensure visibility scope */
 			//@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
 			@i @Stats.0.vartab@    = symtab_merge( @Stat.0.vartab@, @LetDef.0.vartab@);
-			@i @LetDef.0.fieldtab@ = @Stat.0.fieldtab@;
 			
 			//@i @Stats.0.vartab@    = @LetDef.0.vartab@;
 			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
@@ -244,12 +239,15 @@ Stat: RETURN Expr
 			 * -- a new symtab to ensure scope), and the elements of arg1 will be
 			 * appended as copies, so no mixup with the original elements */
 			@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
+			//@e Stats.vartab : Stat.vartab Stat.fieldtab;
+			//   @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
 		
 			/* and we have to pass things on as well */
 			@i @Stats.fieldtab@  = @Stat.fieldtab@;
 			@i @Stats.structtab@ = @Stat.structtab@;
 		
 			@i @Expr.vartab@   = @Stat.vartab@;
+			@i @Expr.visscope@ = @Stat.vartab@;
 			@i @Expr.fieldtab@ = @Stat.fieldtab@;
 		@}
 	| Lexpr '=' Expr 	/* Zuweisung */ 
@@ -259,12 +257,14 @@ Stat: RETURN Expr
 			@i @Lexpr.0.fieldtab@ = @Stat.0.fieldtab@;
 		
 			@i @Expr.0.vartab@   = @Stat.0.vartab@;	
+			@i @Expr.0.visscope@   = @Stat.0.vartab@;	
 			@i @Expr.0.fieldtab@ = @Stat.0.fieldtab@;
 		@}
 	| Term
 		@{
 			/* down the rabbit hole! */
 			@i @Term.0.vartab@   = @Stat.0.vartab@;	
+			@i @Term.0.visscope@   = @Stat.0.vartab@;	
 			@i @Term.0.fieldtab@ = @Stat.0.vartab@;	
 		@}
 	;
@@ -286,32 +286,26 @@ Condlist:  /* empty */
 			/* the Expr doesn't need to know the structs (at least i hope so) */	
 			@i @Expr.0.fieldtab@  = @Condlist.0.fieldtab@;
 			@i @Expr.0.vartab@	  = @Condlist.0.vartab@;
+			@i @Expr.0.visscope@	  = @Condlist.0.vartab@;
 		@}
 	;
 
-/* this construct merely exists to avoid a conflict when trying to destinct 
- * between the LET definitons and a Lexpr=Expt Statement
-LetDef: LET LetList
-		@{
-			@i @LetList.vartab@   = @LetDef.vartab@;
-			@i @LetList.fieldtab@ = @LetDef.fieldtab@;
-		@}
-	;
- */
 LetDef: 
 		@{
 			@i @LetDef.0.vartab@ = symtab_init();
 		@}
 	| LetDef IDENTIFIER '=' Expr  ';' 
 		@{
-			//@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
-			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, @IDENTIFIER.0.name@, NULL);
-			
-			/* liegt hier der hase im pfeffer vergraben? */
-			@i @LetDef.1.fieldtab@ = @LetDef.0.fieldtab@;
-		
 			@i @Expr.0.vartab@   = @LetDef.0.vartab@;
 			@i @Expr.0.fieldtab@ = @LetDef.0.fieldtab@;
+			@i @Expr.0.visscope@ = @LetDef.0.visscope@;
+			
+			//@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
+			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, @IDENTIFIER.0.name@, NULL);
+
+			@i @LetDef.1.fieldtab@ = @LetDef.0.fieldtab@;
+			@i @LetDef.1.visscope@ = @LetDef.0.visscope@;
+			
 		@}
 	; 
 
@@ -322,6 +316,7 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/
 			
 			/* and as always there is stuff to get down */
 			@i @Term.vartab@ 	= @Lexpr.vartab@;
+			@i @Term.visscope@ 	= @Lexpr.vartab@;
 			@i @Term.fieldtab@  = @Lexpr.fieldtab@;	
 		@}
 
@@ -335,29 +330,35 @@ Lexpr: Term '.' IDENTIFIER 	/* Schreibender Feldzugriff 		*/
 Notexpr: '-' Term
 		@{
 			@i @Term.vartab@   = @Notexpr.vartab@;
+			@i @Term.visscope@ = @Notexpr.visscope@;
 			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
 		@}
 	| NOT Term
 		@{
 			@i @Term.vartab@   = @Notexpr.vartab@;
+			@i @Term.visscope@ = @Notexpr.visscope@;
 			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
 		@}
 	| '-' Notexpr
 		@{
 			@i @Notexpr.1.vartab@   = @Notexpr.0.vartab@;
+			@i @Notexpr.1.visscope@ = @Notexpr.0.visscope@;
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 		@}
 	| NOT Notexpr 
 		@{
 			@i @Notexpr.1.vartab@   = @Notexpr.0.vartab@;
+			@i @Notexpr.1.visscope@ = @Notexpr.0.visscope@;
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 		@}
 	;
 
 Addexpr: Term '+' Term
 		@{
-			@i @Term.0.vartab@ = @Addexpr.0.vartab@;
-			@i @Term.1.vartab@ = @Addexpr.0.vartab@;
+			@i @Term.0.vartab@   = @Addexpr.0.vartab@;
+			@i @Term.0.visscope@ = @Addexpr.0.visscope@;
+			@i @Term.1.vartab@   = @Addexpr.0.vartab@;
+			@i @Term.1.visscope@ = @Addexpr.0.visscope@;
 		
 			@i @Term.0.fieldtab@ = @Addexpr.0.fieldtab@;
 			@i @Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
@@ -365,7 +366,9 @@ Addexpr: Term '+' Term
 	| Addexpr '+' Term
 		@{
 			@i @Term.0.vartab@    = @Addexpr.0.vartab@;
+			@i @Term.0.visscope@  = @Addexpr.0.visscope@;
 			@i @Addexpr.1.vartab@ = @Addexpr.0.vartab@;
+			@i @Addexpr.1.visscope@ = @Addexpr.0.visscope@;
 	
 			@i @Term.0.fieldtab@    = @Addexpr.0.fieldtab@;
 			@i @Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
@@ -375,7 +378,9 @@ Addexpr: Term '+' Term
 Mulexpr: Term '*' Term
 		@{
 			@i @Term.0.vartab@ = @Mulexpr.0.vartab@;
+			@i @Term.0.visscope@ = @Mulexpr.0.visscope@;
 			@i @Term.1.vartab@ = @Mulexpr.0.vartab@;
+			@i @Term.1.visscope@ = @Mulexpr.0.visscope@;
 
 			@i @Term.0.fieldtab@ = @Mulexpr.0.fieldtab@;
 			@i @Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
@@ -383,7 +388,9 @@ Mulexpr: Term '*' Term
 	| Mulexpr '*' Term
 		@{
 			@i @Term.0.vartab@    = @Mulexpr.0.vartab@;
+			@i @Term.0.visscope@    = @Mulexpr.0.visscope@;
 			@i @Mulexpr.1.vartab@ = @Mulexpr.0.vartab@;
+			@i @Mulexpr.1.visscope@ = @Mulexpr.0.visscope@;
 
 			@i @Term.0.fieldtab@    = @Mulexpr.0.fieldtab@;
 			@i @Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
@@ -393,7 +400,9 @@ Mulexpr: Term '*' Term
 Orexpr: Term OR Term
 		@{
 			@i @Term.0.vartab@ = @Orexpr.0.vartab@;
+			@i @Term.0.visscope@ = @Orexpr.0.visscope@;
 			@i @Term.1.vartab@ = @Orexpr.0.vartab@;
+			@i @Term.1.visscope@ = @Orexpr.0.visscope@;
 
 			@i @Term.0.fieldtab@ = @Orexpr.0.fieldtab@;
 			@i @Term.1.fieldtab@ = @Orexpr.0.fieldtab@;
@@ -401,7 +410,9 @@ Orexpr: Term OR Term
 	| Orexpr OR Term
 		@{
 			@i @Term.0.vartab@   = @Orexpr.0.vartab@;
+			@i @Term.0.visscope@ = @Orexpr.0.visscope@;
 			@i @Orexpr.1.vartab@ = @Orexpr.0.vartab@;
+			@i @Orexpr.1.visscope@ = @Orexpr.0.visscope@;
 
 			@i @Term.0.fieldtab@   = @Orexpr.0.fieldtab@;
 			@i @Orexpr.1.fieldtab@ = @Orexpr.0.fieldtab@;
@@ -411,42 +422,51 @@ Orexpr: Term OR Term
 Expr: Notexpr
 		@{
 			@i @Notexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Notexpr.0.visscope@ = @Expr.0.visscope@;
 			@i @Notexpr.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Addexpr
 		@{
 			@i @Addexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Addexpr.0.visscope@ = @Expr.0.visscope@;
 			@i @Addexpr.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Mulexpr
 		@{
 			@i @Mulexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Mulexpr.0.visscope@ = @Expr.0.visscope@;
 			@i @Mulexpr.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Orexpr
 		@{
 			@i @Orexpr.0.vartab@   = @Expr.0.vartab@;
+			@i @Orexpr.0.visscope@ = @Expr.0.visscope@;
 			@i @Orexpr.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Term '>' Term
 		@{
 			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.visscope@ = @Expr.0.visscope@;
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
 		
 			@i @Term.1.vartab@   = @Expr.0.vartab@;
+			@i @Term.1.visscope@ = @Expr.0.visscope@;
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Term NOTEQUAL Term 
 		@{
 			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.visscope@ = @Expr.0.visscope@;
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
 	
 			@i @Term.1.vartab@   = @Expr.0.vartab@;
+			@i @Term.1.visscope@ = @Expr.0.visscope@;
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	| Term
 		@{
 			@i @Term.0.vartab@   = @Expr.0.vartab@;
+			@i @Term.0.visscope@ = @Expr.0.visscope@;
 			@i @Term.0.fieldtab@ = @Expr.0.fieldtab@;
 		@}
 	;
@@ -456,8 +476,10 @@ ExprList: /* empty */
 	| ExprList Expr ','
 		@{
 			/* we didn't have anything to get down for quite a while */
-			@i @ExprList.1.vartab@ = @ExprList.0.vartab@;
-			@i @Expr.0.vartab@ 	   = @ExprList.0.vartab@;
+			@i @ExprList.1.vartab@  = @ExprList.0.vartab@;
+			@i @ExprList.1.visscope@ = @Expr.0.visscope@;
+			@i @Expr.0.vartab@ 	    = @ExprList.0.vartab@;
+			@i @Expr.0.visscope@    = @ExprList.0.visscope@;
 			
 			@i @ExprList.1.fieldtab@ = @ExprList.0.fieldtab@;
 			@i @Expr.0.fieldtab@ 	 = @ExprList.0.fieldtab@;
@@ -469,6 +491,7 @@ FinalArg: /* empty */
 	| Expr
 		@{
 			@i @Expr.vartab@   = @FinalArg.vartab@;
+			@i @Expr.visscope@ = @FinalArg.visscope@;
 			@i @Expr.fieldtab@ = @FinalArg.fieldtab@;
 		@}
 	; 
@@ -476,6 +499,7 @@ FinalArg: /* empty */
 Term: '(' Expr ')'
 		@{
 			@i @Expr.vartab@   = @Term.vartab@;
+			@i @Expr.visscope@ = @Term.visscope@;
 			@i @Expr.fieldtab@ = @Term.fieldtab@;
 		@}
 	| NUMBER
@@ -487,18 +511,22 @@ Term: '(' Expr ')'
 		
 			/* and as always there is stuff to get down */
 			@i @Term.1.vartab@   = @Term.0.vartab@;
+			@i @Term.1.visscope@ = @Term.0.visscope@;
 			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
 		@}
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{
 			/* check if IDENTIFIER is a defined variable */
-			@checkscope symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
+			//@checkscope symtab_isdef( @Term.0.vartab@, @IDENTIFIER.0.name@);
+			@checkscope symtab_isdef( @Term.0.visscope@, @IDENTIFIER.0.name@);
 		@}
 	| IDENTIFIER '(' /*{ Expr ',' }*/ ExprList FinalArg ')' 	/* Funktionsaufruf */ 
 		@{
 			/* IDENTIFIER is the name of the function --> ignore */
 			@i @ExprList.vartab@ = @Term.vartab@;
+			@i @ExprList.visscope@ = @Term.visscope@;
 			@i @FinalArg.vartab@ = @Term.vartab@;
+			@i @FinalArg.visscope@ = @Term.visscope@;
 		
 			@i @ExprList.fieldtab@ = @Term.fieldtab@;
 			@i @FinalArg.fieldtab@ = @Term.fieldtab@;
@@ -676,6 +704,10 @@ void symtab_checkdup(symtab *tab, char *name)
  */
 void symtab_isdef(symtab *tab, char *name)
 {
+	
+	printf("checking if %s is defined in:\n",name);
+	symtab_print(tab);
+	
 	symtabentry *entry = stentry_find(tab, name);
 	if(entry == NULL) 
 	{
@@ -687,13 +719,13 @@ void symtab_isdef(symtab *tab, char *name)
 void symtab_print(symtab *tab){
 	
 	symtabentry *cursor = tab->first;
-	printf("printing tab\n");
+	printf("symtab: ");
 	while(cursor != NULL) 
 	{
-		printf("entry: %s\n", cursor->name);
+		printf("%s, ", cursor->name);
 		cursor = cursor->next;
 	}
-	printf("printing complete\n");
+	printf("\n");
 }
 
 symtabentry *stentry_init(void)
