@@ -27,6 +27,7 @@ symtab *symtab_init(void);
 symtab *symtab_add(symtab *tab, char *name, char *ref);
 symtab *symtab_dup(symtab *src, symtab *dest);
 symtab *symtab_merge(symtab *tab1, symtab *tab2);
+symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2);
 symtab *symtab_subtab(symtab *ftab, char *name);
 void symtab_checkdup(symtab *tab, char *name);
 void symtab_isdef(symtab *tab, char *name);
@@ -92,7 +93,8 @@ extern FILE* yyin;
 @attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						FinalArg
 @attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Term
 
-@traversal @lefttoright @preorder waitwith
+@traversal @lefttoright @preorder updatescope1
+@traversal @lefttoright @preorder updatescope2
 @traversal @lefttoright @postorder checkscope
 
 
@@ -192,8 +194,10 @@ Stats: /* empty */
 	
 			@i @Stats.1.structtab@ = @Stat.0.structtab@;
 			@i @Stats.1.fieldtab@  = @Stat.0.fieldtab@;
-			@i @Stats.1.vartab@    = @Stat.0.vartab@;
+			@i @Stats.1.vartab@ = @Stat.0.vartab@;
 	
+			@updatescope2 @Stat.0.vartab@  = @Stats.0.vartab@;
+			@updatescope2 @Stats.1.vartab@ = @Stats.0.vartab@;
 		@}
 	;
 	
@@ -222,12 +226,22 @@ Stat: RETURN Expr
 			//@i @LetDef.0.vartab@ = symtab_dup( @Stat.0.vartab@, symtab_init());
 			@i @Stats.0.vartab@    = symtab_merge( @Stat.0.vartab@, @LetDef.0.vartab@);
 			
+			@updatescope2 @Stats.0.vartab@  = symtab_merge_nodupcheck( @Stat.0.vartab@, @LetDef.0.vartab@);
+			
 			//@i @Stats.0.vartab@    = @LetDef.0.vartab@;
 			@i @Stats.0.fieldtab@  = @Stat.0.fieldtab@;
 			@i @Stats.0.structtab@ = @Stat.0.structtab@;
 		@}
 	| WITH Expr ':' IDENTIFIER DO Stats END
 		@{
+			/* and we have to pass things on as well */
+			@i @Stats.fieldtab@  = @Stat.fieldtab@;
+			@i @Stats.structtab@ = @Stat.structtab@;
+		
+			@i @Expr.vartab@   = @Stat.vartab@;
+			@i @Expr.visscope@ = @Stat.vartab@;
+			@i @Expr.fieldtab@ = @Stat.fieldtab@;
+			
 			/* check if IDENTIFIER is a valid struct */
 			@checkscope symtab_isdef( @Stat.0.structtab@, @IDENTIFIER.0.name@);
 		
@@ -238,17 +252,11 @@ Stat: RETURN Expr
 			 * NOTE: the result will be in arg2 (so the return * of the function 
 			 * -- a new symtab to ensure scope), and the elements of arg1 will be
 			 * appended as copies, so no mixup with the original elements */
+			//@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
 			@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
-			//@e Stats.vartab : Stat.vartab Stat.fieldtab;
-			//   @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
-		
-			/* and we have to pass things on as well */
-			@i @Stats.fieldtab@  = @Stat.fieldtab@;
-			@i @Stats.structtab@ = @Stat.structtab@;
-		
-			@i @Expr.vartab@   = @Stat.vartab@;
-			@i @Expr.visscope@ = @Stat.vartab@;
-			@i @Expr.fieldtab@ = @Stat.fieldtab@;
+			
+			/* reassign scope if structs are defined below functions */
+			@updatescope1 @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
 		@}
 	| Lexpr '=' Expr 	/* Zuweisung */ 
 		@{
@@ -644,6 +652,32 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 	while(cursor != NULL) 
 	{
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
+		cursor = cursor->next;
+	}
+		
+	printf("resulttab:\n");
+	symtab_print(tab2);
+	printf("merging complete\n");
+	return tab2;
+}
+
+symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2)
+{
+	printf("merging tabs\n");
+	printf("============\n");
+	printf("tab1:\n");
+	symtab_print(tab1);
+	printf("tab2:\n");
+	symtab_print(tab2);
+	
+	symtabentry *cursor = tab1->first;
+	while(cursor != NULL) 
+	{
+		symtabentry *entry = stentry_find(tab2, cursor->name);
+		if(entry == NULL) 
+		{
+			stentry_append(tab2, stentry_dup(cursor)); 
+		}
 		cursor = cursor->next;
 	}
 		
