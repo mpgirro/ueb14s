@@ -1,0 +1,12 @@
+ag
+foo
+lex.o
+lex.yy.c
+ox.o
+oxout.l
+oxout.output
+oxout.tab.c
+oxout.tab.h
+oxout.y
+test1.0
+test2.0
