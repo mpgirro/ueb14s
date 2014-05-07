@@ -74,9 +74,10 @@ extern FILE* yyin;
 @attributes { char *name; } IDENTIFIER
 @attributes { symtab *structtab; symtab *fieldtab; } 					Program
 @attributes { symtab *structtab; symtab *fieldtab; }					Def
-@attributes { symtab *structtab; symtab *fieldtab; symtab *ignoretab; }					Structdef
+@attributes { symtab *structtab; symtab *fieldtab; symtab *dummy1; symtab *dummy2; }					Structdef
 @attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
 @attributes { symtab *tab; char *structname; } 							Ids
+@attributes { symtab *fieldtab; char *structname; }						FieldDef
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
 @attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Condlist
@@ -133,20 +134,40 @@ Def: Funcdef
 		@}
 	;
 	
-Structdef: STRUCT IDENTIFIER ':' Ids END
+Structdef: STRUCT IDENTIFIER ':' /*Ids*/ FieldDef END
 		@{
 			
-			@i @Structdef.ignoretab@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
-			@i @Ids.tab@ = @Structdef.0.fieldtab@;
-			@i @Ids.structname@ = @IDENTIFIER.0.name@;
+			@i @Structdef.dummy1@ = symtab_add(@Structdef.0.structtab@, @IDENTIFIER.0.name@, NULL);
+			
+			/* merge fields defined by Ids into public fieldtab */
+			//@i @Structdef.dummy2@ = symtab_merge( @Ids.tab@, @Structdef.fieldtab@);
+			//@i @Structdef.dummy1@ = NULL;
+			@i @Structdef.dummy2@ = NULL;
+			//@i @Ids.tab@ = @Structdef.0.fieldtab@;
+			@i @FieldDef.fieldtab@  = @Structdef.fieldtab@;
+			@i @FieldDef.structname@ = @IDENTIFIER.0.name@;
 		@}
 	;
 	
-Ids: 
+FieldDef:
 
+	| FieldDef IDENTIFIER
+		@{
+			@i @FieldDef.1.fieldtab@ = symtab_add( @FieldDef.0.fieldtab@, @IDENTIFIER.name@, @FieldDef.0.structname@);
+			@i @FieldDef.1.structname@ = @FieldDef.0.structname@;
+		@}
+	;
+	
+	
+Ids: 
+		@{
+			@i @Ids.tab@ = symtab_init();
+		@}
+		
 	| Ids IDENTIFIER
 		@{
-			@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
+			//@i @Ids.1.tab@ = symtab_add( @Ids.0.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
+			@i @Ids.0.tab@ = symtab_add( @Ids.1.tab@, @IDENTIFIER.name@, @Ids.0.structname@);
 			@i @Ids.1.structname@ = @Ids.0.structname@;
 		@}
 	;
@@ -154,7 +175,7 @@ Ids:
 Funcdef: FUNC IDENTIFIER '(' Ids ')' Stats END
 		@{ 	
 			
-			@i @Ids.tab@ = symtab_init();
+			//@i @Ids.tab@ = symtab_init();
 			@i @Ids.structname@ = NULL; // will be handled by the symtab_add function
 			
 			/* the parameters are visible within the function --> 
@@ -283,7 +304,6 @@ LetDef:
 		@}
 	| LetDef IDENTIFIER '=' Expr  ';' 
 		@{
-			
 			//@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
 			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, @IDENTIFIER.0.name@, NULL);
 			
@@ -598,6 +618,7 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
 		cursor = cursor->next;
 	}
+		
 	printf("resulttab:\n");
 	symtab_print(tab2);
 	printf("merging complete\n");
@@ -611,17 +632,26 @@ symtab *symtab_subtab(symtab *tab, char *name)
 {
 	symtab *ntab = symtab_init(); /* fields of struct */
 	printf("subbing tab\n");
+	if(tab == NULL)
+		printf("tab is null!\n");
 	if(name != NULL)
 	{
-		symtabentry *cursor = tab->first;
-		while(cursor != NULL) 
+		if(tab->first != NULL)
 		{
-			if(strcmp(name, cursor->ref) == 0) 
+			symtabentry *cursor = tab->first;
+			while(cursor != NULL) 
 			{
-				printf("adding %s\n", cursor->name);
-				stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
+				if(cursor->ref != NULL)
+					printf("cursor->ref is NULL!\n");
+				
+				if( strcmp(name, cursor->ref) == 0 && cursor->ref != NULL ) 
+				{
+					if( cursor->name != NULL && cursor->ref != NULL)
+						printf("adding %s of %s\n", cursor->name, cursor->ref);
+					stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
+				}
+				cursor = cursor->next;
 			}
-			cursor = cursor->next;
 		}
 	}
 	printf("subbing complete\n");
