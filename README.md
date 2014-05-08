@@ -1,4 +1,4 @@
-# TU Wien - Übersetzerbau VU - 2014S - Beispiel 5: Attributierte Grammatik
+# Übersetzerbau VU / 2014S / Beispiel 5: Attributierte Grammatik
 
 ## Termin
 
