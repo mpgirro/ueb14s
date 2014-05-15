@@ -3,7 +3,8 @@
 
 /* === structs === */
 	
-typedef struct symboltable_entry{
+typedef struct symboltable_entry
+{
 	char *name;
 
 	/* if field entry this is the name  of the
@@ -12,7 +13,9 @@ typedef struct symboltable_entry{
 	struct symboltable_entry *next;	
 } symtabentry_t;
 
-typedef struct symboltable{
+
+typedef struct symboltable
+{
 	symtabentry_t *first;
 	symtabentry_t *last;
 } symtab_t;
