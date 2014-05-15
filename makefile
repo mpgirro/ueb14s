@@ -36,7 +36,7 @@ lex.o: flex
 	gcc -c lex.yy.c -o lex.o
 	
 ag: ox.o lex.o 
-	gcc ox.o lex.o -lfl -o ag
+	gcc ox.o lex.o symtab.o  -lfl -o ag
 	
 codea: libs
 	
