@@ -5,7 +5,7 @@
 
 symtab_t *symtab_init(void)
 {
-	symtab_t *tab = malloc(sizeof(symtab));
+	symtab_t *tab = malloc(sizeof(symtab_t));
 	tab->first = NULL;
 	tab->last = NULL;
 	return tab;
