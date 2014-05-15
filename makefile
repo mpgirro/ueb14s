@@ -4,7 +4,9 @@ BISON_FILES = oxout.tab.h oxout.tab.c
 FLEX_FILES = lex.yy.c
 OBJECT_FILES = ox.o lex.o
 SRCS_FILES = gram.y scan.l
-ABGABE_FILES = gram.y scan.l symtab.h
+ABGABE_FILES = gram.y scan.l symtab.h symtab.c
+
+LIBS = symtab.o syntree.o
 
 .PHONY: all clean
 
@@ -13,7 +15,7 @@ all: ag
 
 # removes all generated files
 clean:
-	rm -rf $(wildcard *~) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) $(OBJECT_FILES) ag 
+	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) $(OBJECT_FILES) ag 
 	
 # creates oxout.y oxout.l
 ox:	$(SRCS_FILES)
@@ -33,8 +35,14 @@ ox.o: bison
 lex.o: flex
 	gcc -c lex.yy.c -o lex.o
 	
-ag: ox.o lex.o
+ag: ox.o lex.o libs
 	gcc ox.o lex.o -lfl -o ag
 	
+codea: libs
+	
+libs: symtab.c syntree.c
+	gcc -c symtab.c -o symtab.o
+	gcc -c syntree.c -o syntree.o
+	
 abgabe:
-	cp makefile $(ABGABE_FILES) ~/abgabe/ag/
+	cp makefile $(ABGABE_FILES) ~/abgabe/codea/
