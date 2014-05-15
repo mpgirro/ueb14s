@@ -23,20 +23,20 @@ void yyerror(const char *msg);
 void semanticerror(void);
 
 /* symbol table maintainance */
-symtab *symtab_init(void);
-symtab *symtab_add(symtab *tab, char *name, char *ref);
-symtab *symtab_dup(symtab *src, symtab *dest);
-symtab *symtab_merge(symtab *tab1, symtab *tab2);
-symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2);
-symtab *symtab_subtab(symtab *ftab, char *name);
-void symtab_checkdup(symtab *tab, char *name);
-void symtab_isdef(symtab *tab, char *name);
-void symtab_print(symtab *tab);
+symtab_t *symtab_init(void);
+symtab_t *symtab_add(symtab_t *tab, char *name, char *ref);
+symtab_t *symtab_dup(symtab_t *src, symtab_t *dest);
+symtab_t *symtab_merge(symtab_t *tab1, symtab_t *tab2);
+symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2);
+symtab_t *symtab_subtab(symtab_t *ftab, char *name);
+void symtab_checkdup(symtab_t *tab, char *name);
+void symtab_isdef(symtab_t *tab, char *name);
+void symtab_print(symtab_t *tab);
 
-symtabentry *stentry_init(void);
-symtabentry *stentry_append(symtab *tab, symtabentry *entry);
-symtabentry *stentry_dup(symtabentry *entry);
-symtabentry *stentry_find(symtab *tab, char *name);
+symtabentry_t *stentry_init(void);
+symtabentry_t *stentry_append(symtab_t *tab, symtabentry_t *entry);
+symtabentry_t *stentry_dup(symtabentry_t *entry);
+symtabentry_t *stentry_find(symtab_t *tab, char *name);
 
 extern int yylex();
 extern int yyparse();
@@ -73,25 +73,25 @@ extern FILE* yyin;
 %start Start
 
 @attributes { char *name; } IDENTIFIER
-@attributes { symtab *structtab; symtab *fieldtab; } 					Program
-@attributes { symtab *structtab; symtab *fieldtab; }					Def
-@attributes { symtab *structtab; symtab *fieldtab; symtab *dummy1; }	Structdef
-@attributes { symtab *structtab; symtab *fieldtab; }					Funcdef
-@attributes { symtab *tab; } 											ParamDef
-@attributes { symtab *fieldtab; char *structname; }						FieldDef
-@attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stats
-@attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Stat
-@attributes { symtab *structtab; symtab *fieldtab; symtab *vartab; }	Condlist
-@attributes { symtab *fieldtab; symtab *vartab; symtab *visscope; }		LetDef
-@attributes { symtab *fieldtab; symtab *vartab; }						Lexpr
-@attributes { symtab *fieldtab; symtab *vartab; symtab *visscope; }						Notexpr
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Addexpr
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Mulexpr
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Orexpr
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Expr
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						ExprList
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						FinalArg
-@attributes { symtab *fieldtab; symtab *vartab;symtab *visscope; }						Term
+@attributes { symtab_t *structtab; symtab_t *fieldtab; } 					Program
+@attributes { symtab_t *structtab; symtab_t *fieldtab; }					Def
+@attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *dummy1; }	Structdef
+@attributes { symtab_t *structtab; symtab_t *fieldtab; }					Funcdef
+@attributes { symtab_t *tab; } 											ParamDef
+@attributes { symtab_t *fieldtab; char *structname; }						FieldDef
+@attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; }	Stats
+@attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; }	Stat
+@attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; }	Condlist
+@attributes { symtab_t *fieldtab; symtab_t *vartab; symtab_t *visscope; }		LetDef
+@attributes { symtab_t *fieldtab; symtab_t *vartab; }						Lexpr
+@attributes { symtab_t *fieldtab; symtab_t *vartab; symtab_t *visscope; }						Notexpr
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						Addexpr
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						Mulexpr
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						Orexpr
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						Expr
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						ExprList
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						FinalArg
+@attributes { symtab_t *fieldtab; symtab_t *vartab;symtab_t *visscope; }						Term
 
 @traversal @lefttoright @preorder updatescope1
 @traversal @lefttoright @preorder updatescope2
@@ -250,7 +250,7 @@ Stat: RETURN Expr
 			 * yet, we will need the already defined variables as well, so
 			 * merge these two symtables into one
 			 * NOTE: the result will be in arg2 (so the return * of the function 
-			 * -- a new symtab to ensure scope), and the elements of arg1 will be
+			 * -- a new symtab_t to ensure scope), and the elements of arg1 will be
 			 * appended as copies, so no mixup with the original elements */
 			//@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
 			@i @Stats.vartab@ = symtab_merge( @Stat.vartab@, symtab_subtab( @Stat.fieldtab@, @IDENTIFIER.0.name@));
@@ -580,18 +580,18 @@ void semanticerror(void)
 	exit(SEMANTIC_ERROR);
 }
 
-symtab *symtab_init(void)
+symtab_t *symtab_init(void)
 {
-	symtab *tab = malloc(sizeof(symtab));
+	symtab_t *tab = malloc(sizeof(symtab));
 	tab->first = NULL;
 	tab->last = NULL;
 	return tab;
 }
 
-symtab *symtab_add(symtab *tab, char *name, char *ref)
+symtab_t *symtab_add(symtab_t *tab, char *name, char *ref)
 {
 	/* ok, now lets add the new entry */
-	symtabentry *entry = stentry_init();
+	symtabentry_t *entry = stentry_init();
 	entry->name = strdup(name);
 
 	/* strdup(NULL) is very undefined and not to be trusted */
@@ -605,14 +605,14 @@ symtab *symtab_add(symtab *tab, char *name, char *ref)
 }
 
 /* make an exact duplicate (copy) of symbol table src into dest */
-symtab *symtab_dup(symtab *src, symtab *dest)
+symtab_t *symtab_dup(symtab_t *src, symtab_t *dest)
 {
 	printf("duplicating tab\n");
 	printf("================\n");
 	printf("src:\n");
 	symtab_print(src);
-	symtabentry *cursor;
-	symtabentry *copy;
+	symtabentry_t *cursor;
+	symtabentry_t *copy;
 	if(src->first != NULL) 
 	{
 		cursor = src->first;
@@ -639,7 +639,7 @@ symtab *symtab_dup(symtab *src, symtab *dest)
 /*
  * adds every element of 
  */
-symtab *symtab_merge(symtab *tab1, symtab *tab2)
+symtab_t *symtab_merge(symtab_t *tab1, symtab_t *tab2)
 {
 	printf("merging tabs\n");
 	printf("============\n");
@@ -648,7 +648,7 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 	printf("tab2:\n");
 	symtab_print(tab2);
 	
-	symtabentry *cursor = tab1->first;
+	symtabentry_t *cursor = tab1->first;
 	while(cursor != NULL) 
 	{
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
@@ -661,7 +661,7 @@ symtab *symtab_merge(symtab *tab1, symtab *tab2)
 	return tab2;
 }
 
-symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2)
+symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2)
 {
 	printf("merging tabs\n");
 	printf("============\n");
@@ -670,10 +670,10 @@ symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2)
 	printf("tab2:\n");
 	symtab_print(tab2);
 	
-	symtabentry *cursor = tab1->first;
+	symtabentry_t *cursor = tab1->first;
 	while(cursor != NULL) 
 	{
-		symtabentry *entry = stentry_find(tab2, cursor->name);
+		symtabentry_t *entry = stentry_find(tab2, cursor->name);
 		if(entry == NULL) 
 		{
 			stentry_append(tab2, stentry_dup(cursor)); 
@@ -687,12 +687,12 @@ symtab *symtab_merge_nodupcheck(symtab *tab1, symtab *tab2)
 	return tab2;
 }
 
-/* search all entries of a symtab for element having a *ref equal to 'name'
- * returns a new symtab with these elements, all elements are copies of there originals
+/* search all entries of a symtab_t for element having a *ref equal to 'name'
+ * returns a new symtab_t with these elements, all elements are copies of there originals
  */
-symtab *symtab_subtab(symtab *tab, char *name)
+symtab_t *symtab_subtab(symtab_t *tab, char *name)
 {
-	symtab *ntab = symtab_init(); /* fields of struct */
+	symtab_t *ntab = symtab_init(); /* fields of struct */
 	printf("subbing tab\n");
 	if(tab == NULL)
 		printf("tab is null!\n");
@@ -700,7 +700,7 @@ symtab *symtab_subtab(symtab *tab, char *name)
 	{
 		if(tab->first != NULL)
 		{
-			symtabentry *cursor = tab->first;
+			symtabentry_t *cursor = tab->first;
 			while(cursor != NULL) 
 			{
 				if(cursor->ref != NULL)
@@ -723,9 +723,9 @@ symtab *symtab_subtab(symtab *tab, char *name)
 /*
  * checks if a symbol 'name' is already in the symbol table *tab, raises an error if so
  */
-void symtab_checkdup(symtab *tab, char *name)
+void symtab_checkdup(symtab_t *tab, char *name)
 {
-	symtabentry *entry = stentry_find(tab, name);
+	symtabentry_t *entry = stentry_find(tab, name);
 	if(entry != NULL) 
 	{
 		(void) fprintf(stderr, "duplicate names found: %s\n", name);
@@ -736,13 +736,13 @@ void symtab_checkdup(symtab *tab, char *name)
 /*
  * check if a symbol 'name' is defined in *tab, raised an error if not
  */
-void symtab_isdef(symtab *tab, char *name)
+void symtab_isdef(symtab_t *tab, char *name)
 {
 	
 	printf("checking if %s is defined in:\n",name);
 	symtab_print(tab);
 	
-	symtabentry *entry = stentry_find(tab, name);
+	symtabentry_t *entry = stentry_find(tab, name);
 	if(entry == NULL) 
 	{
 		(void) fprintf(stderr, "symbol not defined in scope: %s\n", name);
@@ -750,9 +750,9 @@ void symtab_isdef(symtab *tab, char *name)
 	}
 }
 
-void symtab_print(symtab *tab){
+void symtab_print(symtab_t *tab){
 	
-	symtabentry *cursor = tab->first;
+	symtabentry_t *cursor = tab->first;
 	printf("symtab: ");
 	while(cursor != NULL) 
 	{
@@ -762,15 +762,15 @@ void symtab_print(symtab *tab){
 	printf("\n");
 }
 
-symtabentry *stentry_init(void)
+symtabentry_t *stentry_init(void)
 {
-	symtabentry *entry = malloc(sizeof(symtabentry));
+	symtabentry_t *entry = malloc(sizeof(symtabentry_t));
 	entry->next = NULL;
 	return entry;
 }
 
 /* append a entry to the symbol table at the first position */
-symtabentry *stentry_append(symtab *tab, symtabentry *entry)
+symtabentry_t *stentry_append(symtab_t *tab, symtabentry_t *entry)
 {
 	
 	/* check if variable is already defined */
@@ -789,9 +789,9 @@ symtabentry *stentry_append(symtab *tab, symtabentry *entry)
 }
 
 /* duplicate a symbol table entry, returns an exact copy */
-symtabentry *stentry_dup(symtabentry *entry)
+symtabentry_t *stentry_dup(symtabentry_t *entry)
 {
-	symtabentry *dup = stentry_init();
+	symtabentry_t *dup = stentry_init();
 	dup->name = strdup(entry->name);
 	
 	/* strdup(NULL) is very undefined and not to be trusted */
@@ -803,10 +803,10 @@ symtabentry *stentry_dup(symtabentry *entry)
 	return dup;
 }
 
-symtabentry *stentry_find(symtab *tab, char *name)
+symtabentry_t *stentry_find(symtab_t *tab, char *name)
 {
-	symtabentry *match = NULL;
-	symtabentry *cursor = tab->first;
+	symtabentry_t *match = NULL;
+	symtabentry_t *cursor = tab->first;
 	while(cursor != NULL) 
 	{
 		if(strcmp(name, cursor->name) == 0) 

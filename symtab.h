@@ -7,9 +7,9 @@ typedef struct symboltable_entry{
 	 * struct this field belongs to, NULL else */
 	char *ref;  
 	struct symboltable_entry *next;	
-} symtabentry;
+} symtabentry_t;
 
 typedef struct symboltable{
-	symtabentry *first;
-	symtabentry *last;
-} symtab;
+	symtabentry_t *first;
+	symtabentry_t *last;
+} symtab_t;
