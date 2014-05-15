@@ -40,9 +40,8 @@ ag: ox.o lex.o libs
 	
 codea: libs
 	
-libs: symtab.c syntree.c
+libs: symtab.c 
 	gcc -c symtab.c -o symtab.o
-	gcc -c syntree.c -o syntree.o
 	
 abgabe:
 	cp makefile $(ABGABE_FILES) ~/abgabe/codea/
