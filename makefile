@@ -18,7 +18,7 @@ clean:
 	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) $(OBJECT_FILES) ag 
 	
 # creates oxout.y oxout.l
-ox:	$(SRCS_FILES)
+ox:	$(SRCS_FILES) libs
 	ox $(SRCS_FILES)
 	
 # creates oxout.tab.h oxout.tab.c
@@ -29,13 +29,13 @@ bison: ox
 flex: ox
 	flex oxout.l
 	
-ox.o: bison
+ox.o: bison 
 	gcc -c oxout.tab.c -o ox.o -Wno-format
 	
 lex.o: flex
 	gcc -c lex.yy.c -o lex.o
 	
-ag: ox.o lex.o libs
+ag: ox.o lex.o 
 	gcc ox.o lex.o -lfl -o ag
 	
 codea: libs
