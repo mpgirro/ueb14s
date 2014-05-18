@@ -11,11 +11,17 @@ symtab_t *symtab_init(void)
 	return tab;
 }
 
-symtab_t *symtab_add(symtab_t *tab, char *name, char *ref)
+symtab_t *symtab_add(symtab_t *tab, char *reg, char *name, char *ref)
 {
 	/* ok, now lets add the new entry */
 	symtabentry_t *entry = stentry_init();
+	
 	entry->name = strdup(name);
+	
+	if(reg != NULL)
+		entry->reg = strdup(reg);
+	else
+		entry->reg = NULL;
 
 	/* strdup(NULL) is very undefined and not to be trusted */
 	if(ref != NULL)
@@ -81,20 +87,20 @@ symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2)
 	return tab2;
 }
 
-/* search all entries of a symtab_t for element having a *ref equal to 'name'
+/* search all entries of a symtab_t for element having a *ref equal to ref
  * returns a new symtab_t with these elements, all elements are copies of there originals
  */
-symtab_t *symtab_subtab(symtab_t *tab, char *name)
+symtab_t *symtab_subtab(symtab_t *tab, char *ref)
 {
 	symtab_t *ntab = symtab_init(); /* fields of struct */
-	if(name != NULL)
+	if(ref != NULL)
 	{
 		if(tab->first != NULL)
 		{
 			symtabentry_t *cursor = tab->first;
 			while(cursor != NULL) 
 			{	
-				if( strcmp(name, cursor->ref) == 0 && cursor->ref != NULL ) 
+				if( strcmp(ref, cursor->ref) == 0 && cursor->ref != NULL ) 
 				{
 					stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
 				}
@@ -214,3 +220,32 @@ symtabentry_t *stentry_reg(symtab_t *tab, char *name)
 	}
 	return entry->reg;
 }
+
+/* returns the register of a given field (by name) */
+char *stentry_fieldreg(symtab_t *fieldtab, char *name)
+{
+	/* first loop up the field entry */
+	symtabentry_t fentry = stentry_find(fieldtab,name);
+	
+	/* now make a list of all the fields of the struct 
+	 * the struct name is specified by the ref of the fieldentry */
+	symtab_t structfields = symtab_subtab(fieldtab,fentry->ref);
+	
+	/* the fields of each struct are added chonologically by definiton
+	 * appearence to the fieldtab. therefore, just count the position
+	 * in the structtab to get the field position */
+	
+	int pos = -1; /* first element will have offset 0 */
+	symtabentry_t *cursor = structfields->first;
+	while(cursor != NULL) 
+	{
+		if(strcmp(name, cursor->name) == 0) 
+			break;
+		else
+			pos += 1;
+	}
+	
+	
+}
+
+

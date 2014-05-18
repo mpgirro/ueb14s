@@ -19,11 +19,19 @@ typedef enum node_type
 {
 	T_NUM = 1,
 	T_VAR = 2,
-	T_RET = 3
+	T_RET = 3,
+	T_NOT = 4,
+	T_ADD = 5,
+	T_MUL = 6,
+	T_OR  = 7,
+	T_GRE = 8,
+	T_NEQ = 9
 } nodetype_t;
 
 /* === structs === */
 	
+/* structure of syntax tree nodes 
+ * built by ox for iburg  */
 typedef struct tree_node
 {
 	nodetype_t op;
@@ -31,11 +39,11 @@ typedef struct tree_node
 	struct syntree_node *right;
 	struct burm_struct *state;
 	char *name;
-	char *reg;
 	int64_t val;
+	char *reg;
 } tnode_t;
 
-typedef tnode_t *tnode_p  /* treenode pointer type */
+typedef tnode_t *treenodep  /* so that burg/iburg understands it */
 
 /* === function signatures === */
 
