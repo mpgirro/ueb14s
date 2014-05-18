@@ -1,0 +1,79 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "symtab.h"
+#include "syntree.h"
+
+%}
+
+%start stmt
+	
+/* machtes nodetype_t; used by OP_LABEL(p) */
+%term T_NUM=1 
+%term T_VAR=2
+%term T_RET=3
+%term T_NOT=4	
+%term T_ADD=5
+%term T_MUL=6
+%term T_OR=7	
+%term T_GRE=8
+%term T_NEQ=9
+
+%%
+
+num:		T_NUM					# 0
+var:		T_VAR					# 0
+tvar:		T_TVAR					# 0
+
+num:		T_ADD(num, num)			# 1 #	bnode->val = bnode->left->val + bnode->right->val;
+num:		T_NOT(num)				# 1 #	bnode->val = -bnode->left->val;
+num:		T_MUL(num, num)			# 4 #	bnode->val = bnode->left->val * bnode->right->val;
+
+tvar:		notvar
+tvar:		nottvar
+
+tvar:		addvar
+tvar:		addtvar
+
+tvar:		mulvar
+tvar:		multvar
+	
+notvar:		T_NOT(var)				# 1 # 	bnode->name = asm_not_var(bnode->left);
+
+addvar:		T_ADD(var, num)			# 1 #	bnode->name = asm_add_reg_num(bnode->left, bnode->right->val);
+addvar:		T_ADD(num, var)			# 1 #	bnode->name = asm_add_reg_num(bnode->right, bnode->left->val); 
+addvar:		T_ADD(var, var)			# 1 # 	bnode->name = asm_add_reg_reg(bnode->left, bnode->right); 
+
+addtvar:	T_ADD(tvar, num)		# 1 #	bnode->name = asm_add_tvar_num(bnode->left, bnode->right->val);
+addtvar:	T_ADD(num, tvar)		# 1 #	bnode->name = asm_add_tvar_num(bnode->right, bnode->left->val);
+addtvar:	T_ADD(tvar, tvar)		# 1 #	bnode->name = asm_add_tvar_tvar(bnode->left, bnode->right);
+addtvar:	T_ADD(tvar, var)		# 1 #	bnode->name = asm_add_tvar_var(bnode->left, bnode->right);
+addtvar:	T_ADD(var, tvar)		# 1 #	bnode->name = asm_add_tvar_var(bnode->right, bnode->left);
+
+
+mulvar:		T_MUL(var, num)			# 4 #	bnode->name = asm_mul_reg_num(bnode->left, bnode->right->val);
+mulvar:		T_MUL(num, var)			# 4 #	bnode->name = asm_mul_reg_num(bnode->right, bnode->left->val); 
+mulvar:		T_MUL(var, var)			# 4 # 	bnode->name = asm_mul_reg_reg(bnode->left, bnode->right); 
+
+multvar:	T_MUL(tvar, num)		# 4 #	bnode->name = asm_mul_tvar_num(bnode->left, bnode->right->val);
+multvar:	T_MUL(num, tvar)		# 4 #	bnode->name = asm_mul_tvar_num(bnode->right, bnode->left->val); 
+multvar:	T_MUL(tvar, tvar)		# 4 # 	bnode->name = asm_mul_tvar_tvar(bnode->left, bnode->right); 
+multvar:	T_MUL(tvar, var)		# 4 #	bnode->name = asm_mul_tvar_var(bnode->left, bnode->right);
+multvar:	T_MUL(var, tvar)		# 4 #	bnode->name = asm_mul_tvar_var(bnode->right, bnode->left);
+
+
+ret: 		T_RET(num)				# 1 #	asm_ret_num(bnode->left);
+ret:		T_RET(var)				# 1 #	asm_ret_reg(bnode->left); 
+ret:		T_RET(tvar)				# 1 #	asm_ret_tvar(bnode->left); 
+
+stmt:		ret						# 1 #	asm_ret();
+
+
+
+%%
+
+
+
+
+
