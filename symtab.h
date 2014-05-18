@@ -6,7 +6,7 @@
 typedef struct symboltable_entry
 {
 	char *name;
-
+	char *reg;
 	/* if field entry this is the name  of the
 	 * struct this field belongs to, NULL else */
 	char *ref;  
@@ -36,5 +36,6 @@ symtabentry_t *stentry_init(void);
 symtabentry_t *stentry_append(symtab_t *tab, symtabentry_t *entry);
 symtabentry_t *stentry_dup(symtabentry_t *entry);
 symtabentry_t *stentry_find(symtab_t *tab, char *name);
+symtabentry_t *stentry_reg(symtab_t *tab, char *name);
 
 #endif

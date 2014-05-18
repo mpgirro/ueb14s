@@ -30,10 +30,6 @@ symtab_t *symtab_add(symtab_t *tab, char *name, char *ref)
 /* make an exact duplicate (copy) of symbol table src into dest */
 symtab_t *symtab_dup(symtab_t *src, symtab_t *dest)
 {
-	printf("duplicating tab\n");
-	printf("================\n");
-	printf("src:\n");
-	symtab_print(src);
 	symtabentry_t *cursor;
 	symtabentry_t *copy;
 	if(src->first != NULL) 
@@ -53,9 +49,6 @@ symtab_t *symtab_dup(symtab_t *src, symtab_t *dest)
 			cursor = cursor->next;
 		}
 	}
-	printf("dest:\n");
-	symtab_print(dest);
-	printf("duplicating complete\n");
 	return dest;
 }
 
@@ -63,36 +56,18 @@ symtab_t *symtab_dup(symtab_t *src, symtab_t *dest)
  * adds every element of 
  */
 symtab_t *symtab_merge(symtab_t *tab1, symtab_t *tab2)
-{
-	printf("merging tabs\n");
-	printf("============\n");
-	printf("tab1:\n");
-	symtab_print(tab1);
-	printf("tab2:\n");
-	symtab_print(tab2);
-	
+{	
 	symtabentry_t *cursor = tab1->first;
 	while(cursor != NULL) 
 	{
 		stentry_append(tab2, stentry_dup(cursor)); /* append a copy! */
 		cursor = cursor->next;
 	}
-		
-	printf("resulttab:\n");
-	symtab_print(tab2);
-	printf("merging complete\n");
 	return tab2;
 }
 
 symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2)
-{
-	printf("merging tabs\n");
-	printf("============\n");
-	printf("tab1:\n");
-	symtab_print(tab1);
-	printf("tab2:\n");
-	symtab_print(tab2);
-	
+{	
 	symtabentry_t *cursor = tab1->first;
 	while(cursor != NULL) 
 	{
@@ -103,10 +78,6 @@ symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2)
 		}
 		cursor = cursor->next;
 	}
-		
-	printf("resulttab:\n");
-	symtab_print(tab2);
-	printf("merging complete\n");
 	return tab2;
 }
 
@@ -116,30 +87,21 @@ symtab_t *symtab_merge_nodupcheck(symtab_t *tab1, symtab_t *tab2)
 symtab_t *symtab_subtab(symtab_t *tab, char *name)
 {
 	symtab_t *ntab = symtab_init(); /* fields of struct */
-	printf("subbing tab\n");
-	if(tab == NULL)
-		printf("tab is null!\n");
 	if(name != NULL)
 	{
 		if(tab->first != NULL)
 		{
 			symtabentry_t *cursor = tab->first;
 			while(cursor != NULL) 
-			{
-				if(cursor->ref != NULL)
-					printf("cursor->ref is NULL!\n");
-				
+			{	
 				if( strcmp(name, cursor->ref) == 0 && cursor->ref != NULL ) 
 				{
-					if( cursor->name != NULL && cursor->ref != NULL)
-						printf("adding %s of %s\n", cursor->name, cursor->ref);
 					stentry_append(ntab, stentry_dup(cursor)); /* append a copy! */
 				}
 				cursor = cursor->next;
 			}
 		}
 	}
-	printf("subbing complete\n");
 	return ntab;
 }
 
@@ -240,4 +202,15 @@ symtabentry_t *stentry_find(symtab_t *tab, char *name)
 		cursor = cursor->next;
 	}
 	return match;
+}
+
+symtabentry_t *stentry_reg(symtab_t *tab, char *name)
+{
+	symtabentry_t *entry = stentry_find(tab,name);
+	if(entry == NULL)
+	{
+		(void) fprintf(stderr, "not register found for entry: %s. entry is NULL\n", name);
+		semanticerror();
+	}
+	return entry->reg;
 }
