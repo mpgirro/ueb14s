@@ -2,24 +2,22 @@
 OX_FILES = oxout.y oxout.l
 BISON_FILES = oxout.tab.h oxout.tab.c
 FLEX_FILES = lex.yy.c
-OBJECT_FILES = ox.o lex.o
-SRCS_FILES = gram.y scan.l
-ABGABE_FILES = gram.y scan.l symtab.h symtab.c
+ABGABE_FILES = gram.y scan.l symtab.c syntree.c code_gen.c symtab.h syntree.h code_gen.h code.bfe
 
-LIBS = symtab.o syntree.o
+LIBS = symtab.o syntree.o code_gen.o
 
-.PHONY: all clean
+.PHONY: all clean 
 
 # creates the parser
 all: ag							
 
 # removes all generated files
 clean:
-	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) $(OBJECT_FILES) ag 
+	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) codea
 	
 # creates oxout.y oxout.l
-ox:	$(SRCS_FILES) libs
-	ox $(SRCS_FILES)
+ox:	ram.y scan.l libs
+	ox ram.y scan.l
 	
 # creates oxout.tab.h oxout.tab.c
 bison: ox
@@ -35,13 +33,22 @@ ox.o: bison
 lex.o: flex
 	gcc -c lex.yy.c -o lex.o
 	
-ag: ox.o lex.o 
-	gcc ox.o lex.o symtab.o  -lfl -o ag
+code.o: iburg
+	gcc -c code.c -o code.o
 	
-codea: libs
+codea: ox.o lex.o libs
+	gcc ox.o lex.o code.o $(LIBS) -lfl -o codea
 	
-libs: symtab.c 
-	gcc -c symtab.c -o symtab.o
+libs: symtab.c syntree.c code_gen.c
+	gcc -c symtab.c -o symtab.o 
+	gcc -c syntree.c -o syntree.o
+	gcc -c code_gen.c -o code_gen.o
+	
+bfe: code.bfe
+	bfe code.bfe > code.brg
+	
+iburg: bfe
+	iburg code.brg > code.c
 	
 abgabe:
 	cp makefile $(ABGABE_FILES) ~/abgabe/codea/

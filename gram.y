@@ -25,10 +25,15 @@ void semanticerror(void);
 char *next_reg(void);
 void reset_regcursor(void);
 
+void burm_label(NODEPTR_TYPE);
+void burm_reduce(NODEPTR_TYPE bnode, int goalnt);
+
 extern int yylex();
 extern int yyparse();
 
 /* === global variables === */
+
+FILE *output;
 
 extern FILE* yyin;
 
@@ -170,6 +175,9 @@ Funcdef: FUNC IDENTIFIER '(' ParamDef ')' Stats END
 			 * needed in the Stats as well --> get them down too! */
 			@i @Stats.0.structtab@ = @Funcdef.0.structtab@;
 			@i @Stats.0.fieldtab@  = @Funcdef.0.fieldtab@;
+			
+			@codegen burm_label(@Stats.node@); burm_reduce(@Stats.node@,1);
+			@codegen reset_regcursor();
 		@}
 	;
 
@@ -355,7 +363,7 @@ Notexpr: '-' Term
 			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NOT, @Term.0.node@, NULL);
+			@i @Notexpr.0.node@ = new_op(T…NEG, @Term.0.node@, NULL);
 		@}
 	| NOT Term
 		@{
@@ -373,7 +381,7 @@ Notexpr: '-' Term
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NOT, @Notexpr.1.node@, NULL);
+			@i @Notexpr.0.node@ = new_op(T…NEG, @Notexpr.1.node@, NULL);
 		@}
 	| NOT Notexpr 
 		@{
@@ -634,6 +642,8 @@ int main(int argc, char **argv)
 	{
 		yyin = stdin;
 	}
+	
+	output = stdout;
 
 	yyparse();
 

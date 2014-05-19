@@ -25,7 +25,8 @@ typedef enum node_type
 	T_MUL = 6,
 	T_OR  = 7,
 	T_GRE = 8,
-	T_NEQ = 9
+	T_NEQ = 9,
+	T_NEG = 10
 } nodetype_t;
 
 /* === structs === */
