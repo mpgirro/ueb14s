@@ -36,6 +36,7 @@ symtabentry_t *stentry_init(void);
 symtabentry_t *stentry_append(symtab_t *tab, symtabentry_t *entry);
 symtabentry_t *stentry_dup(symtabentry_t *entry);
 symtabentry_t *stentry_find(symtab_t *tab, char *name);
-symtabentry_t *stentry_reg(symtab_t *tab, char *name);
+char *stentry_reg(symtab_t *tab, char *name);
+char *stentry_fieldreg(symtab_t *fieldtab, char *name);
 
 #endif

@@ -1,7 +1,8 @@
 
-OX_FILES = oxout.y oxout.l
+OX_FILES = oxout.y oxout.l oxout.output
 BISON_FILES = oxout.tab.h oxout.tab.c
 FLEX_FILES = lex.yy.c
+BURG_FILES = code.brg code.c
 ABGABE_FILES = gram.y scan.l symtab.c syntree.c code_gen.c symtab.h syntree.h code_gen.h code.bfe
 
 LIBS = symtab.o syntree.o code_gen.o
@@ -9,15 +10,15 @@ LIBS = symtab.o syntree.o code_gen.o
 .PHONY: all clean 
 
 # creates the parser
-all: ag							
+all: codea							
 
 # removes all generated files
 clean:
-	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) codea
+	rm -rf $(wildcard *~) $(wildcard *.o) $(OX_FILES) $(BISON_FILES) $(FLEX_FILES) $(BURG_FILES) codea 
 	
 # creates oxout.y oxout.l
-ox:	ram.y scan.l libs
-	ox ram.y scan.l
+ox:	gram.y scan.l libs
+	ox gram.y scan.l
 	
 # creates oxout.tab.h oxout.tab.c
 bison: ox
@@ -36,7 +37,7 @@ lex.o: flex
 code.o: iburg
 	gcc -c code.c -o code.o
 	
-codea: ox.o lex.o libs
+codea: ox.o lex.o code.o libs
 	gcc ox.o lex.o code.o $(LIBS) -lfl -o codea
 	
 libs: symtab.c syntree.c code_gen.c

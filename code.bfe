@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <assert.h>
 #include "symtab.h"
 #include "syntree.h"
 
@@ -9,7 +9,6 @@
 
 %start stmt
 	
-/* machtes nodetype_t; used by OP_LABEL(p) */
 %term T_NUM=1 
 %term T_VAR=2
 %term T_RET=3
@@ -20,14 +19,8 @@
 %term T_GRE=8
 %term T_NEQ=9
 %term T_NEG=10
-
-%%
 	
-stmt:		ret						# 1 #	asm_ret();
-
-ret: 		T_RET(num)				# 1 #	asm_ret_num(bnode->left);
-ret:		T_RET(var)				# 1 #	asm_ret_reg(bnode->left); 
-ret:		T_RET(tvar)				# 1 #	asm_ret_tvar(bnode->left); 
+%%
 
 num:		T_NUM					# 0
 var:		T_VAR					# 0
@@ -39,33 +32,24 @@ num:		T_NEG(num)				# 1 #	bnode->val = -bnode->left->val;
 num:		T_MUL(num, num)			# 4 #	bnode->val = bnode->left->val * bnode->right->val;
 
 tvar:		notvar					 
-tvar:		nottvar					 
-				
+tvar:		nottvar					 			
 tvar:		negvar					 
 tvar:		negtvar					 
-
 tvar:		addvar					 
 tvar:		addtvar					
-
 tvar:		mulvar
 tvar:		multvar
-	
 tvar:		orvar
 tvar:		ortvar
-	
 tvar:		grevar
 tvar:		gretvar
-
 tvar:		neqvar
 tvar:		neqtvar
-	
 notvar:		T_NOT(var)				# 1 # 	bnode->name = asm_not_var(bnode->left);
-
-nottvar:	T_NOT(tvar)				# 1 #	bnode->name = asm_not_tvar(bnode-left);
+nottvar:	T_NOT(tvar)				# 1 #	bnode->name = asm_not_tvar(bnode->left);
 
 negvar:		T_NEG(var)				# 1 # 	bnode->name = asm_neg_var(bnode->left);
-	
-negtvar:	T_NEG(var)				# 1 #	bnode->name = asm_neg_tvar(bnode-left);
+negtvar:	T_NEG(var)				# 1 #	bnode->name = asm_neg_tvar(bnode->left);
 
 addvar:		T_ADD(var, num)			# 1 #	bnode->name = asm_op_reg_num("add", bnode->left, bnode->right->val);
 addvar:		T_ADD(num, var)			# 1 #	bnode->name = asm_op_reg_num("add", bnode->right, bnode->left->val); 
@@ -77,7 +61,6 @@ addtvar:	T_ADD(tvar, tvar)		# 1 #	bnode->name = asm_op_tvar_tvar("add", bnode->l
 addtvar:	T_ADD(tvar, var)		# 1 #	bnode->name = asm_op_tvar_var("add", bnode->left, bnode->right);
 addtvar:	T_ADD(var, tvar)		# 1 #	bnode->name = asm_op_tvar_var("add", bnode->right, bnode->left);
 
-
 mulvar:		T_MUL(var, num)			# 4 #	bnode->name = asm_op_reg_num("imul", bnode->left, bnode->right->val);
 mulvar:		T_MUL(num, var)			# 4 #	bnode->name = asm_op_reg_num("imul", bnode->right, bnode->left->val); 
 mulvar:		T_MUL(var, var)			# 4 # 	bnode->name = asm_op_reg_reg("imul", bnode->left, bnode->right); 
@@ -87,7 +70,6 @@ multvar:	T_MUL(num, tvar)		# 4 #	bnode->name = asm_op_tvar_num("imul", bnode->ri
 multvar:	T_MUL(tvar, tvar)		# 4 # 	bnode->name = asm_op_tvar_tvar("imul", bnode->left, bnode->right); 
 multvar:	T_MUL(tvar, var)		# 4 #	bnode->name = asm_op_tvar_var("imul", bnode->left, bnode->right);
 multvar:	T_MUL(var, tvar)		# 4 #	bnode->name = asm_op_tvar_var("imul", bnode->right, bnode->left);
-
 
 orvar:		T_OR(var, num)			# 1 #	bnode->name = asm_op_reg_num("or", bnode->left, bnode->right->val);
 orvar:		T_OR(num, var)			# 1 #	bnode->name = asm_op_reg_num("or", bnode->right, bnode->left->val); 
@@ -99,7 +81,6 @@ ortvar:		T_OR(tvar, tvar)		# 1 #	bnode->name = asm_op_tvar_tvar("or", bnode->lef
 ortvar:		T_OR(tvar, var)			# 1 #	bnode->name = asm_op_tvar_var("or", bnode->left, bnode->right);
 ortvar:		T_OR(var, tvar)			# 1 #	bnode->name = asm_op_tvar_var("or", bnode->right, bnode->left);
 
-
 grevar:		T_GRE(var, num)			# 1 #	bnode->name = asm_cmpop_reg_num("g", "le", bnode->left, bnode->right->val);
 grevar:		T_GRE(num, var)			# 1 #	bnode->name = asm_cmpop_reg_num("g", "le", bnode->right, bnode->left->val); 
 grevar:		T_GRE(var, var)			# 1 # 	bnode->name = asm_cmpop_reg_reg("g", "le", bnode->left, bnode->right);
@@ -110,7 +91,6 @@ gretvar:	T_GRE(tvar, tvar)		# 1 #	bnode->name = asm_cmpop_tvar_tvar("g", "le", b
 gretvar:	T_GRE(tvar, var)		# 1 #	bnode->name = asm_cmpop_tvar_var("g", "le", bnode->left, bnode->right);
 gretvar:	T_GRE(var, tvar)		# 1 #	bnode->name = asm_cmpop_tvar_var("g", "le", bnode->right, bnode->left);
 
-
 neqvar:		T_NEQ(var, num)			# 1 #	bnode->name = asm_cmpop_reg_num("e", "ne", bnode->left, bnode->right->val);
 neqvar:		T_NEQ(num, var)			# 1 #	bnode->name = asm_cmpop_reg_num("e", "ne", bnode->right, bnode->left->val); 
 neqvar:		T_NEQ(var, var)			# 1 # 	bnode->name = asm_cmpop_reg_reg("e", "ne", bnode->left, bnode->right);
@@ -120,6 +100,12 @@ neqtvar:	T_NEQ(num, tvar)		# 1 #	bnode->name = asm_cmpop_tvar_num("e", "ne", bno
 neqtvar:	T_NEQ(tvar, tvar)		# 1 #	bnode->name = asm_cmpop_tvar_tvar("e", "ne", bnode->left, bnode->right);
 neqtvar:	T_NEQ(tvar, var)		# 1 #	bnode->name = asm_cmpop_tvar_var("e", "ne", bnode->left, bnode->right);
 neqtvar:	T_NEQ(var, tvar)		# 1 #	bnode->name = asm_cmpop_tvar_var("e", "ne", bnode->right, bnode->left);
+
+ret: 		T_RET(num)				# 1 #	asm_ret_num(bnode->left);
+ret:		T_RET(var)				# 1 #	asm_ret_reg(bnode->left); 
+ret:		T_RET(tvar)				# 1 #	asm_ret_tvar(bnode->left); 
+
+stmt:		ret						# 1 #	asm_ret();
 
 %%
 

@@ -14,7 +14,7 @@ tnode_t *new_node(nodetype_t type, tnode_t *left, tnode_t *right)
 	return node;
 }
 	
-tnode_t *new_num(int val)
+tnode_t *new_num(int64_t val)
 {
 	tnode_t *node = new_node(T_NUM, NULL, NULL);
 	node->val = val;
@@ -40,10 +40,4 @@ tnode_t *new_ret(tnode_t *left)
 {
 	tnode_t *node = new_node(T_RET, left, NULL);
 	return node;
-}
-
-tnode_t *new_prog(tnode_t *left, tnode_t *right)
-{
-	
-	
 }

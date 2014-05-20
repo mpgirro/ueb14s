@@ -210,7 +210,7 @@ symtabentry_t *stentry_find(symtab_t *tab, char *name)
 	return match;
 }
 
-symtabentry_t *stentry_reg(symtab_t *tab, char *name)
+char *stentry_reg(symtab_t *tab, char *name)
 {
 	symtabentry_t *entry = stentry_find(tab,name);
 	if(entry == NULL)
@@ -223,13 +223,13 @@ symtabentry_t *stentry_reg(symtab_t *tab, char *name)
 
 /* returns the register of a given field (by name) */
 char *stentry_fieldreg(symtab_t *fieldtab, char *name)
-{
+{	
 	/* first loop up the field entry */
-	symtabentry_t fentry = stentry_find(fieldtab,name);
+	symtabentry_t *fentry = stentry_find(fieldtab,name);
 	
 	/* now make a list of all the fields of the struct 
 	 * the struct name is specified by the ref of the fieldentry */
-	symtab_t structfields = symtab_subtab(fieldtab,fentry->ref);
+	symtab_t *structfields = symtab_subtab(fieldtab,fentry->ref);
 	
 	/* the fields of each struct are added chonologically by definiton
 	 * appearence to the fieldtab. therefore, just count the position

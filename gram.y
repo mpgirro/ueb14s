@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h> /* for 64 bit int */
 #include "symtab.h"
 #include "syntree.h"
 
@@ -44,7 +45,7 @@ char *registers[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 %union {
 	char *sval;
-	signed long nval;
+	int64_t nval;
 }
 
 %token STRUCT
@@ -67,7 +68,8 @@ char *registers[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 %start Start
 
-@attributes { char *name; } IDENTIFIER
+@attributes { char *name; }																	IDENTIFIER
+@attributes { int64_t val; }																NUMBER
 @attributes { symtab_t *structtab; symtab_t *fieldtab; } 									Program
 @attributes { symtab_t *structtab; symtab_t *fieldtab; }									Def
 @attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *dummy1; }					Structdef
@@ -294,7 +296,7 @@ Stat: RETURN Expr
 			@i @Term.0.visscope@   = @Stat.0.vartab@;	
 			@i @Term.0.fieldtab@ = @Stat.0.vartab@;	
 			
-			@i @Term.0.node@ = NULL;
+			@i @Stat.0.node@ = NULL;
 		@}
 	;
 
@@ -363,7 +365,7 @@ Notexpr: '-' Term
 			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NEG, @Term.0.node@, NULL);
+			@codegen @Notexpr.0.node@ = new_op(T_NEG, @Term.0.node@, NULL);
 		@}
 	| NOT Term
 		@{
@@ -372,7 +374,7 @@ Notexpr: '-' Term
 			@i @Term.fieldtab@ = @Notexpr.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NOT, @Term.0.node@, NULL);
+			@codegen @Notexpr.0.node@ = new_op(T_NOT, @Term.0.node@, NULL);
 		@}
 	| '-' Notexpr
 		@{
@@ -381,7 +383,7 @@ Notexpr: '-' Term
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NEG, @Notexpr.1.node@, NULL);
+			@codegen @Notexpr.0.node@ = new_op(T_NEG, @Notexpr.1.node@, NULL);
 		@}
 	| NOT Notexpr 
 		@{
@@ -390,7 +392,7 @@ Notexpr: '-' Term
 			@i @Notexpr.1.fieldtab@ = @Notexpr.0.fieldtab@;
 			
 			@i @Notexpr.0.node@ = NULL;	
-			@i @Notexpr.0.node@ = new_op(T…NOT, @Notexpr.1.node@, NULL);
+			@codegen @Notexpr.0.node@ = new_op(T_NOT, @Notexpr.1.node@, NULL);
 		@}
 	;
 
@@ -405,7 +407,7 @@ Addexpr: Term '+' Term
 			@i @Term.1.fieldtab@ = @Addexpr.0.fieldtab@;
 			
 			@i @Addexpr.0.node@ = NULL;	
-			@i @Addexpr.0.node@ = new_op(T…ADD, @Term.0.node@, @Term.1.node@);
+			@codegen @Addexpr.0.node@ = new_op(T_ADD, @Term.0.node@, @Term.1.node@);
 		@}	
 	| Addexpr '+' Term
 		@{
@@ -418,7 +420,7 @@ Addexpr: Term '+' Term
 			@i @Addexpr.1.fieldtab@ = @Addexpr.0.fieldtab@;
 			
 			@i @Addexpr.0.node@ = NULL;	
-			@i @Addexpr.0.node@ = new_op(T…ADD, @Addexpr.1.node@, @Term.0.node@);
+			@codegen @Addexpr.0.node@ = new_op(T_ADD, @Addexpr.1.node@, @Term.0.node@);
 		@}	
 	;
 
@@ -433,7 +435,7 @@ Mulexpr: Term '*' Term
 			@i @Term.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 			
 			@i @Mulexpr.0.node@ = NULL;	
-			@i @Mulexpr.0.node@ = new_op(T…MUL, @Term.0.node@, @Term.1.node@);
+			@codegen @Mulexpr.0.node@ = new_op(T_MUL, @Term.0.node@, @Term.1.node@);
 		@}	
 	| Mulexpr '*' Term
 		@{
@@ -446,7 +448,7 @@ Mulexpr: Term '*' Term
 			@i @Mulexpr.1.fieldtab@ = @Mulexpr.0.fieldtab@;
 			
 			@i @Mulexpr.0.node@ = NULL;	
-			@i @Mulexpr.0.node@ = new_op(T…MUL, @Mulexpr.1.node@, @Term.0.node@);
+			@codegen @Mulexpr.0.node@ = new_op(T_MUL, @Mulexpr.1.node@, @Term.0.node@);
 		@}	
 	;
 
@@ -461,7 +463,7 @@ Orexpr: Term OR Term
 			@i @Term.1.fieldtab@ = @Orexpr.0.fieldtab@;
 			
 			@i @Orexpr.0.node@ = NULL;	
-			@i @Orexpr.0.node@ = new_op(T…OR, @Term.0.node@, @Term.1.node@);
+			@codegen @Orexpr.0.node@ = new_op(T_OR, @Term.0.node@, @Term.1.node@);
 		@}	
 	| Orexpr OR Term
 		@{
@@ -474,7 +476,7 @@ Orexpr: Term OR Term
 			@i @Orexpr.1.fieldtab@ = @Orexpr.0.fieldtab@;
 			
 			@i @Orexpr.0.node@ = NULL;	
-			@i @Orexpr.0.node@ = new_op(T…OR, @Orexpr.1.node@, @Term.0.node@);
+			@codegen @Orexpr.0.node@ = new_op(T_OR, @Orexpr.1.node@, @Term.0.node@);
 		@}	
 	;
 
@@ -525,7 +527,7 @@ Expr: Notexpr
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 			
 			@i @Expr.node@ = NULL;
-			@i @Expr.0.node@ = new_op(T…GRE, @Term.0.node@, @Term.1.node@);
+			@codegen @Expr.0.node@ = new_op(T_GRE, @Term.0.node@, @Term.1.node@);
 		@}
 	| Term NOTEQUAL Term 
 		@{
@@ -538,7 +540,7 @@ Expr: Notexpr
 			@i @Term.1.fieldtab@ = @Expr.0.fieldtab@;
 			
 			@i @Expr.node@ = NULL;
-			@i @Expr.0.node@ = new_op(T…NEQ, @Term.0.node@, @Term.1.node@);
+			@codegen @Expr.0.node@ = new_op(T_NEQ, @Term.0.node@, @Term.1.node@);
 		@}
 	| Term
 		@{
@@ -602,7 +604,7 @@ Term: '(' Expr ')'
 			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
 			
 			@i @Term.node@ = NULL;
-			@codegen @Term.node@ = new_num(@NUMBER.val@);
+			/*@codegen @Term.node@ = new_num(@NUMBER.val@);*/
 		@}
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{

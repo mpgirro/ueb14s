@@ -7,7 +7,7 @@
 #include <stdint.h> /* for 64 bit int */
 #include "oxout.tab.h"
 #include "symtab.h"
-
+#include "syntree.h"
 
 extern void lexerror(int);
 void process_comment(char *comment);
@@ -55,8 +55,8 @@ or		{ return OR; 	 };
 
 "<>"		{ return NOTEQUAL; };
 
-{DECNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 10);*/ return NUMBER; @{ @NUMBER.val@ = strtol(yytext,NULL,10); @} };
-{HEXNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 16);*/ return NUMBER; @{ @NUMBER.val@ = strtol(yytext,NULL,16); @} };
+{DECNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 10);*/ return NUMBER; @{ @NUMBER.val@ = (int64_t) strtol(yytext,NULL,10); @} };
+{HEXNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 16);*/ return NUMBER; @{ @NUMBER.val@ = (int64_t) strtol(yytext,NULL,16); @} };
 
 {IDENTIFIER}	{ return IDENTIFIER; @{ @IDENTIFIER.name@ = strdup(yytext); @} };
 

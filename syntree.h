@@ -1,18 +1,6 @@
 #ifndef SYNTREE_INCL
 #define SYNTREE_INCL
 
-#ifndef CODE
-typedef struct burm_state *STATEPTR_TYPE; 
-#endif
-
-/* macros for iburg  */
-#define NODEPTR_TYPE    	treenodep
-#define OP_LABEL(p)     	((p)->op)
-#define LEFT_CHILD(p)   	((p)->kids[0])
-#define RIGHT_CHILD(p)  	((p)->kids[1])
-#define STATE_LABEL(p)  	((p)->label)
-#define PANIC				printf
-
 /* === enums === */
 
 typedef enum node_type 
@@ -36,23 +24,30 @@ typedef enum node_type
 typedef struct tree_node
 {
 	nodetype_t op;
-	struct syntree_node *left;
-	struct syntree_node *right;
-	struct burm_struct *state;
+	struct tree_node *left;
+	struct tree_node *right;
+	struct burm_state *label;
 	char *name;
 	int64_t val;
 	char *reg;
 } tnode_t;
 
-typedef tnode_t *treenodep  /* so that burg/iburg understands it */
+typedef tnode_t *treenodeptr;  /* so that burg/iburg understands it */
+
+/* macros for iburg  */
+#define NODEPTR_TYPE    	treenodeptr
+#define OP_LABEL(p)     	((p)->op)
+#define LEFT_CHILD(p)   	((p)->left)
+#define RIGHT_CHILD(p)  	((p)->right)
+#define STATE_LABEL(p)  	((p)->label)
+#define PANIC				printf
 
 /* === function signatures === */
 
 tnode_t *new_node(nodetype_t type, tnode_t *left, tnode_t *right);
-tnode_t *new_num(int val);
+tnode_t *new_num(int64_t val);
 tnode_t *new_var(char *name, char *reg);
 tnode_t *new_op(nodetype_t type, tnode_t *left, tnode_t *right);
 tnode_t *new_ret(tnode_t *left);
-tnode_t *new_prog(tnode_t *left, tnode_t *right);
 
 #endif

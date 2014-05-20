@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h> /* for 64 bit int */
+#include "syntree.h"
 #include "code_gen.h"
 
 extern FILE *output; /* this is where the assambler code goes */
@@ -179,7 +180,7 @@ char *asm_op_reg_reg(char *operator, tnode_t *varnode1, tnode_t *varnode2)
 	return var;
 }
 
-char *asm_op_tvar_num(char *operator, tnode_t *tvarnode, int val)
+char *asm_op_tvar_num(char *operator, tnode_t *tvarnode, int64_t val)
 {
 	(void) fprintf(output, "\t%s $%d, %s\n", operator, val, tvarnode->name);
 	return tvarnode->name;
@@ -223,7 +224,7 @@ char *asm_cmpop_reg_reg(char *cop1, char *cop2, tnode_t *varnode1, tnode_t *varn
 	return var;
 }
 
-char *asm_cmpop_tvar_num(char *cop1, char *cop2, tnode_t *tvarnode, int val)
+char *asm_cmpop_tvar_num(char *cop1, char *cop2, tnode_t *tvarnode, int64_t val)
 {
 	char *var = asm_tmp_var();
 	(void) fprintf(output, "\tcmp $%d, %s\n", val, tvarnode->name);
