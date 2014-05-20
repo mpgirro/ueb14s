@@ -53,3 +53,6 @@ iburg: bfe
 	
 abgabe:
 	cp makefile $(ABGABE_FILES) ~/abgabe/codea/
+
+test:
+	/usr/ftp/pub/ublu/test/codea/test > test_output.txt 2>&1

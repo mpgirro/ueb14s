@@ -28,7 +28,7 @@ char *new_varname()
 	var = malloc(sizeof(char)*len);
 	strcpy(var, tmp_var);
 	strcat(var,num);
-	(void) fprintf(output, "\n----\nnew generated varname: %s\n-----\n", var);
+	//(void) fprintf(output, "\n----\nnew generated varname: %s\n-----\n", var);
 	return var;
 }
 
@@ -52,123 +52,34 @@ char *asm_func_prolog(char *name)
 
 char *asm_not_var(tnode_t *varnode)
 {
-	(void) fprintf(output, "\tnot %%%s\n", varnode->reg);
+	(void) fprintf(output, "\tnotq %%%s\n", varnode->reg);
 	return varnode->name;
 }
 
 char *asm_not_tvar(tnode_t *tvarnode)
 {
-	(void) fprintf(output, "\tnot %s\n", tvarnode->reg);
+	(void) fprintf(output, "\tnotq %s\n", tvarnode->name);
 	return tvarnode->name;
 }
 
 char *asm_neg_var(tnode_t *varnode)
 {
-	(void) fprintf(output, "\tneg %%%s\n", varnode->reg);
+	(void) fprintf(output, "\tnegq %%%s\n", varnode->reg);
 	return varnode->name;
 }
 
 char *asm_neg_tvar(tnode_t *tvarnode)
 {
-	(void) fprintf(output, "\tneg %s\n", tvarnode->reg);
+	(void) fprintf(output, "\tnegq %s\n", tvarnode->name);
 	return tvarnode->name;
 }
-/*
-char *asm_add_reg_num(tnode_t *varnode, int64_t val)
-{
-	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tmov %%%s, %s\n", varnode->reg, var);
-	(void) fprintf(output, "\taddq $%d, %s\n", val, var);
-	return var;
-}
-
-char *asm_add_reg_reg(tnode_t *varnode1, tnode_t *varnode2)
-{
-	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tmov %%%s, %s\n", varnode1->reg, var);
-	(void) fprintf(output, "\taddq %%%s, %s\n", varnode2->reg, var);
-	return var;
-}
-
-char *asm_add_tvar_num(tnode_t *tvarnode, int val)
-{
-	(void) fprintf(output, "\taddq $%d, %s\n", val, tvarnode->name);
-	return tvarnode->name;
-}
-
-char *asm_add_tvar_tvar(tnode_t *tvarnode1, tnode_t *tvarnode2)
-{
-	(void) fprintf(output, "\nmov %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
-	(void) fprintf(output, "\taddq %%%s, %s\n", tmp_regs[0], tvarnode2->name);
-	return tvarnode2->name;
-}
-
-char *asm_add_tvar_var(tnode_t *tvarnode, tnode_t *varnode)
-{
-	(void) fprintf(output, "\taddq %%%s, %s\n", varnode->reg, tvarnode->name);
-	return tvarnode->name;
-}
-
-char *asm_mul_reg_num(tnode_t *varnode, int val)
-{
-	char *var = asm_temp_variable();
-	(void) fprintf(output, "\tpush %%rdx\n");
-	(void) fprintf(output, "\tmov %%%s, %%rax\n", varnode->reg);
-	(void) fprintf(output, "\tmov $%d, %%rdx\n", val);
-	(void) fprintf(output, "\tmulq %%rdx\n");
-	(void) fprintf(output, "\tmov %%rax, %s\n", var);
-	(void) fprintf(output, "\tpop %%rdx\n");
-	return var;
-}
-
-char *asm_mul_reg_reg(tnode_t *varnode1, tnode_t *varnode2)
-{
-	char *var = asm_temp_variable();
-	(void) fprintf(output, "\tpush %%rdx\n");
-	(void) fprintf(output, "\tmov %%%s, %%rax\n", varnode1->reg);
-	(void) fprintf(output, "\tmulq %%%s\n", varnode2->reg);
-	(void) fprintf(output, "\tmov %%rax, %s\n", var);
-	(void) fprintf(output, "\tpop %%rdx\n");
-	return var;
-}
-
-char *asm_mul_tvar_num(tnode_t *tvarnode, int val)
-{
-	(void) fprintf(output, "\tpush %%rdx\n");
-	(void) fprintf(output, "\tmov $%d, %%rax\n", val);
-	(void) fprintf(output, "\tmulq %s\n", tvarnode->name);
-	(void) fprintf(output, "\tmov %%rax, %s\n", tvarnode->name);
-	(void) fprintf(output, "\tpop %%rdx\n");
-	return tvarnode->name;
-}
-
-char *asm_mul_tvar_tvar(tnode_t *tvarnode1, tnode_t *tvarnode2)
-{
-	(void) fprintf(output, "\tpush %%rdx\n");
-	(void) fprintf(output, "\tmov %s, %%rax\n", tvarnode1->name);
-	(void) fprintf(output, "\tmulq %s\n", tvarnode2->name);
-	(void) fprintf(output, "\tmov %%rax, %s\n", tvarnode2->name);
-	(void) fprintf(output, "\tpop %%rdx\n");
-	return tvarnode2->name;
-}
-
-char *asm_mul_tvar_var(tnode_t *tvarnode, tnode_t *varnode)
-{
-	(void) fprintf(output, "\tpush %%rdx\n");
-	(void) fprintf(output, "\tmov %s, %%rax\n", tvarnode->name);
-	(void) fprintf(output, "\tmulq %%%s\n", varnode->reg);
-	(void) fprintf(output, "\tmov %%rax, %s\n", tvarnode->name);
-	(void) fprintf(output, "\tpop %%rdx\n");
-	return tvarnode->name;
-}
-*/
 
 /* ======= these are for "normal" operators (add, mul, etc.) ======= */
 
 char *asm_op_reg_num(char *operator, tnode_t *varnode, int64_t val)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tmov %%%s, %s\n", varnode->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
 	(void) fprintf(output, "\t%s $%d, %s\n", operator, val, var);
 	return var;
 }
@@ -176,7 +87,7 @@ char *asm_op_reg_num(char *operator, tnode_t *varnode, int64_t val)
 char *asm_op_reg_reg(char *operator, tnode_t *varnode1, tnode_t *varnode2)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tmov %%%s, %s\n", varnode1->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode1->reg, var);
 	(void) fprintf(output, "\t%s %%%s, %s\n", operator, varnode2->reg, var);
 	return var;
 }
@@ -189,7 +100,7 @@ char *asm_op_tvar_num(char *operator, tnode_t *tvarnode, int64_t val)
 
 char *asm_op_tvar_tvar(char *operator, tnode_t *tvarnode1, tnode_t *tvarnode2)
 {
-	(void) fprintf(output, "\nmov %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
+	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
 	(void) fprintf(output, "\t%s %%%s, %s\n", operator, tmp_regs[0], tvarnode2->name);
 	return tvarnode2->name;
 }
@@ -212,7 +123,7 @@ char *asm_cmpop_reg_num(char *cop1, char *cop2, tnode_t *varnode, int64_t val)
 {
 	char *var = asm_tmp_var();
 	/* case 1: A>B --> cmp B, A */
-	(void) fprintf(output, "\tcmp $%d, %s\n", val, varnode->reg); 
+	(void) fprintf(output, "\tcmpq $%d, %s\n", val, varnode->reg); 
 	asm_eval_cmp(cop1, cop2, var);
 	//return var;
 }
@@ -220,32 +131,32 @@ char *asm_cmpop_reg_num(char *cop1, char *cop2, tnode_t *varnode, int64_t val)
 char *asm_cmpop_reg_reg(char *cop1, char *cop2, tnode_t *varnode1, tnode_t *varnode2)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tcmp %%%s, %%%s\n", varnode2->reg, varnode1->reg);
-	return asm_eval_cmp(cop1, cop2, var);
+	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", varnode2->reg, varnode1->reg);
+	asm_eval_cmp(cop1, cop2, var);
 	return var;
 }
 
 char *asm_cmpop_tvar_num(char *cop1, char *cop2, tnode_t *tvarnode, int64_t val)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tcmp $%d, %s\n", val, tvarnode->name);
-	return asm_eval_cmp(cop1, cop2, var);
+	(void) fprintf(output, "\tcmpq $%d, %s\n", val, tvarnode->name);
+	asm_eval_cmp(cop1, cop2, var);
 	return var;
 }
 
 char *asm_cmpop_tvar_tvar(char *cop1, char *cop2, tnode_t *tvarnode1, tnode_t *tvarnode2)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tcmp %s, %s\n", tvarnode2->name, tvarnode1->name);
-	return asm_eval_cmp(cop1, cop2, var);
+	(void) fprintf(output, "\tcmpq %s, %s\n", tvarnode2->name, tvarnode1->name);
+	asm_eval_cmp(cop1, cop2, var);
 	return var;
 }
 
 char *asm_cmpop_tvar_var(char *cop1, char *cop2, tnode_t *tvarnode, tnode_t *varnode)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tcmp %%%s, %s\n", varnode->reg, tvarnode->name);
-	return asm_eval_cmp(cop1, cop2, var);
+	(void) fprintf(output, "\tcmpq %%%s, %s\n", varnode->reg, tvarnode->name);
+	asm_eval_cmp(cop1, cop2, var);
 	return var;
 }
 
@@ -258,15 +169,15 @@ void asm_ret()
 
 void asm_ret_reg(tnode_t *varnode)
 {
-	(void) fprintf(output, "\tmov %%%s, %%rax\n", varnode->reg);
+	(void) fprintf(output, "\tmovq %%%s, %%rax\n", varnode->reg);
 }
 
 void asm_ret_num(tnode_t *numnode)
 {
-	(void) fprintf(output, "\tmov $%d, %%rax\n", numnode->val);
+	(void) fprintf(output, "\tmovq $%d, %%rax\n", numnode->val);
 }
 
 void asm_ret_tvar(tnode_t *tvarnode)
 {
-	(void) fprintf(output, "\tmov %s, %%rax\n", tvarnode->name);
+	(void) fprintf(output, "\tmovq %s, %%rax\n", tvarnode->name);
 }
