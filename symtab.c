@@ -130,8 +130,8 @@ void symtab_checkdup(symtab_t *tab, char *name)
 void symtab_isdef(symtab_t *tab, char *name)
 {
 	
-	printf("checking if %s is defined in:\n",name);
-	symtab_print(tab);
+	//printf("checking if %s is defined in:\n",name);
+	//symtab_print(tab);
 	
 	symtabentry_t *entry = stentry_find(tab, name);
 	if(entry == NULL) 
