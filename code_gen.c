@@ -52,8 +52,10 @@ char *asm_func_prolog(char *name)
 
 char *asm_not_var(tnode_t *varnode)
 {
+	char *var = asm_tmp_var();
 	(void) fprintf(output, "\tnotq %%%s\n", varnode->reg);
-	return varnode->reg;
+	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
+	return var;
 }
 
 char *asm_not_tvar(tnode_t *tvarnode)
@@ -63,9 +65,11 @@ char *asm_not_tvar(tnode_t *tvarnode)
 }
 
 char *asm_neg_var(tnode_t *varnode)
-{
+{	
+	char *var = asm_tmp_var();
 	(void) fprintf(output, "\tnegq %%%s\n", varnode->reg);
-	return varnode->reg;
+	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
+	return var;
 }
 
 char *asm_neg_tvar(tnode_t *tvarnode)
@@ -106,19 +110,19 @@ char *asm_op_reg_reg(char *operator, tnode_t *varnode1, tnode_t *varnode2)
 
 char *asm_op_tvar_num(char *operator, tnode_t *tvarnode, int64_t val)
 {
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
 	(void) fprintf(output, "\t%s $%d, %%%s\n", operator, val, tmp_regs[0]);
-	(void) fprintf(output, "\nmovq %%%s, %s\n", tmp_regs[0], tvarnode->name);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], tvarnode->name);
 	return tvarnode->name;
 }
 
 char *asm_op_tvar_tvar(char *operator, tnode_t *tvarnode1, tnode_t *tvarnode2)
 {
 	/* most operations can't take a memory location as source and dest at the same time */
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode2->name, tmp_regs[1]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode2->name, tmp_regs[1]);
 	(void) fprintf(output, "\t%s %%%s, %%%s\n", operator, tmp_regs[0], tmp_regs[1]);
-	(void) fprintf(output, "\nmovq %%%s, %s\n", tmp_regs[1], tvarnode2->name);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[1], tvarnode2->name);
 	return tvarnode2->name;
 }
 
@@ -134,8 +138,8 @@ char *asm_op_tvar_var(char *operator, tnode_t *tvarnode, tnode_t *varnode)
 
 char *asm_eval_cmp(char *cop1, char *cop2, char *var)
 {
-	(void) fprintf(output, "\tcmov%sq $-1, %%%s\n", cop1, tmp_regs[0]); /* if (greater|not equal) write -1 to return var */
-	(void) fprintf(output, "\tcmov%sq $0, %%%s\n", cop2, tmp_regs[0]); /* else write 0 */
+	(void) fprintf(output, "\tcmov%s $-1, %%%s\n", cop1, tmp_regs[0]); /* if (greater|not equal) write -1 to return var */
+	(void) fprintf(output, "\tcmov%s $0, %%%s\n", cop2, tmp_regs[0]); /* else write 0 */
 	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 }
 
@@ -145,7 +149,16 @@ char *asm_cmpop_reg_num(char *cop1, char *cop2, tnode_t *varnode, int64_t val)
 	/* case 1: A>B --> cmp B, A */
 	(void) fprintf(output, "\tcmpq $%d, %%%s\n", val, varnode->reg); 
 	asm_eval_cmp(cop1, cop2, var);
-	//return var;
+	return var;
+}
+
+char *asm_cmpop_num_reg(char *cop1, char *cop2, int64_t val, tnode_t *varnode)
+{
+	char *var = asm_tmp_var();
+	/* case 1: A>B --> cmp B, A */
+	(void) fprintf(output, "\tcmpq %%%s, $%d\n", val, varnode->reg); 
+	asm_eval_cmp(cop1, cop2, var);
+	return var;
 }
 	
 char *asm_cmpop_reg_reg(char *cop1, char *cop2, tnode_t *varnode1, tnode_t *varnode2)
@@ -166,12 +179,23 @@ char *asm_cmpop_tvar_num(char *cop1, char *cop2, tnode_t *tvarnode, int64_t val)
 	return tvarnode->name;
 }
 
+char *asm_cmpop_num_tvar(char *cop1, char *cop2, int64_t val, tnode_t *tvarnode)
+{
+	//char *var = asm_tmp_var();
+	/* most operations can't take a memory location as source and dest */
+	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tcmpq %%%s, $%d\n", tmp_regs[0], val);
+	asm_eval_cmp(cop1, cop2, tvarnode->name);
+	return tvarnode->name;
+}
+
 char *asm_cmpop_tvar_tvar(char *cop1, char *cop2, tnode_t *tvarnode1, tnode_t *tvarnode2)
 {
 	//char *var = asm_tmp_var();
 	/* most operations can't take a memory location as source and dest */
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
-	(void) fprintf(output, "\tcmpq %s, %%%s\n", tvarnode2->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode1->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode2->name, tmp_regs[1]);
+	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", tmp_regs[1], tmp_regs[0]);
 	asm_eval_cmp(cop1, cop2, tvarnode2->name);
 	return tvarnode2->name;
 }
@@ -180,8 +204,18 @@ char *asm_cmpop_tvar_var(char *cop1, char *cop2, tnode_t *tvarnode, tnode_t *var
 {
 	//char *var = asm_tmp_var();
 	/* most operations can't take a memory location as source and dest */
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
 	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", varnode->reg, tmp_regs[0]);
+	asm_eval_cmp(cop1, cop2, tvarnode->name);
+	return tvarnode->name;
+}
+
+char *asm_cmpop_var_tvar(char *cop1, char *cop2, tnode_t *varnode, tnode_t *tvarnode)
+{
+	//char *var = asm_tmp_var();
+	/* most operations can't take a memory location as source and dest */
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", tmp_regs[0], varnode->reg);
 	asm_eval_cmp(cop1, cop2, tvarnode->name);
 	return tvarnode->name;
 }
