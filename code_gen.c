@@ -138,8 +138,11 @@ char *asm_op_tvar_var(char *operator, tnode_t *tvarnode, tnode_t *varnode)
 
 char *asm_eval_cmp(char *cop1, char *cop2, char *var)
 {
-	(void) fprintf(output, "\tcmov%s $-1, %%%s\n", cop1, tmp_regs[0]); /* if (greater|not equal) write -1 to return var */
-	(void) fprintf(output, "\tcmov%s $0, %%%s\n", cop2, tmp_regs[0]); /* else write 0 */
+	(void) fprintf(output, "\tmovq $-1, %%%s\n", tmp_regs[0]); 
+	(void) fprintf(output, "\tmovq $0, %%%s\n", tmp_regs[1]);
+	
+	//(void) fprintf(output, "\tcmov%s $-1, %%%s\n", cop1, tmp_regs[0]); /* if (greater|not equal) write -1 to return var */
+	(void) fprintf(output, "\tcmov%s %%%s, %%%s\n", cop2, tmp_regs[1], tmp_regs[0]); /* else write 0 */
 	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 }
 
@@ -156,7 +159,7 @@ char *asm_cmpop_num_reg(char *cop1, char *cop2, int64_t val, tnode_t *varnode)
 {
 	char *var = asm_tmp_var();
 	/* case 1: A>B --> cmp B, A */
-	(void) fprintf(output, "\tcmpq %%%s, $%d\n", val, varnode->reg); 
+	(void) fprintf(output, "\tcmpq %%%s, $%d\n", varnode->reg, val); 
 	asm_eval_cmp(cop1, cop2, var);
 	return var;
 }
