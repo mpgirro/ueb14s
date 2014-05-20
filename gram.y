@@ -178,6 +178,7 @@ Funcdef: FUNC IDENTIFIER '(' ParamDef ')' Stats END
 			@i @Stats.0.structtab@ = @Funcdef.0.structtab@;
 			@i @Stats.0.fieldtab@  = @Funcdef.0.fieldtab@;
 			
+			@codegen asm_func_prolog(@IDENTIFIER.name@);
 			@codegen burm_label(@Stats.node@); burm_reduce(@Stats.node@,1);
 			@codegen reset_regcursor();
 		@}

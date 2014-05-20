@@ -1,0 +1,328 @@
+%{
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include "symtab.h"
+#include "syntree.h"
+
+%}
+
+%start stmt
+	
+%term T_NUM=1 
+%term T_VAR=2
+%term T_RET=3
+%term T_NOT=4	
+%term T_ADD=5
+%term T_MUL=6
+%term T_OR=7	
+%term T_GRE=8
+%term T_NEQ=9
+%term T_NEG=10
+	
+%%
+num:		T_NUM					 = 1 ( 0);
+var:		T_VAR					 = 2 ( 0);
+tvar:		T_TVAR					 = 3 ( 0);
+num:		T_ADD(num, num)			 = 4 ( 1 );
+num:		T_NOT(num)				 = 5 ( 1 );
+num:		T_NEG(num)				 = 6 ( 1 );
+num:		T_MUL(num, num)			 = 7 ( 4 );
+tvar:		notvar					  = 8;
+tvar:		nottvar					 			 = 9;
+tvar:		negvar					  = 10;
+tvar:		negtvar					  = 11;
+tvar:		addvar					  = 12;
+tvar:		addtvar					 = 13;
+tvar:		mulvar = 14;
+tvar:		multvar = 15;
+tvar:		orvar = 16;
+tvar:		ortvar = 17;
+tvar:		grevar = 18;
+tvar:		gretvar = 19;
+tvar:		neqvar = 20;
+tvar:		neqtvar = 21;
+notvar:		T_NOT(var)				 = 22 ( 1 );
+nottvar:	T_NOT(tvar)				 = 23 ( 1 );
+negvar:		T_NEG(var)				 = 24 ( 1 );
+negtvar:	T_NEG(var)				 = 25 ( 1 );
+addvar:		T_ADD(var, num)			 = 26 ( 1 );
+addvar:		T_ADD(num, var)			 = 27 ( 1 );
+addvar:		T_ADD(var, var)			 = 28 ( 1 );
+addtvar:	T_ADD(tvar, num)		 = 29 ( 1 );
+addtvar:	T_ADD(num, tvar)		 = 30 ( 1 );
+addtvar:	T_ADD(tvar, tvar)		 = 31 ( 1 );
+addtvar:	T_ADD(tvar, var)		 = 32 ( 1 );
+addtvar:	T_ADD(var, tvar)		 = 33 ( 1 );
+mulvar:		T_MUL(var, num)			 = 34 ( 4 );
+mulvar:		T_MUL(num, var)			 = 35 ( 4 );
+mulvar:		T_MUL(var, var)			 = 36 ( 4 );
+multvar:	T_MUL(tvar, num)		 = 37 ( 4 );
+multvar:	T_MUL(num, tvar)		 = 38 ( 4 );
+multvar:	T_MUL(tvar, tvar)		 = 39 ( 4 );
+multvar:	T_MUL(tvar, var)		 = 40 ( 4 );
+multvar:	T_MUL(var, tvar)		 = 41 ( 4 );
+orvar:		T_OR(var, num)			 = 42 ( 1 );
+orvar:		T_OR(num, var)			 = 43 ( 1 );
+orvar:		T_OR(var, var)			 = 44 ( 1 );
+ortvar:		T_OR(tvar, num)			 = 45 ( 1 );
+ortvar:		T_OR(num, tvar)			 = 46 ( 1 );
+ortvar:		T_OR(tvar, tvar)		 = 47 ( 1 );
+ortvar:		T_OR(tvar, var)			 = 48 ( 1 );
+ortvar:		T_OR(var, tvar)			 = 49 ( 1 );
+grevar:		T_GRE(var, num)			 = 50 ( 1 );
+grevar:		T_GRE(num, var)			 = 51 ( 1 );
+grevar:		T_GRE(var, var)			 = 52 ( 1 );
+gretvar:	T_GRE(tvar, num)		 = 53 ( 1 );
+gretvar:	T_GRE(num, tvar)		 = 54 ( 1 );
+gretvar:	T_GRE(tvar, tvar)		 = 55 ( 1 );
+gretvar:	T_GRE(tvar, var)		 = 56 ( 1 );
+gretvar:	T_GRE(var, tvar)		 = 57 ( 1 );
+neqvar:		T_NEQ(var, num)			 = 58 ( 1 );
+neqvar:		T_NEQ(num, var)			 = 59 ( 1 );
+neqvar:		T_NEQ(var, var)			 = 60 ( 1 );
+neqtvar:	T_NEQ(tvar, num)		 = 61 ( 1 );
+neqtvar:	T_NEQ(num, tvar)		 = 62 ( 1 );
+neqtvar:	T_NEQ(tvar, tvar)		 = 63 ( 1 );
+neqtvar:	T_NEQ(tvar, var)		 = 64 ( 1 );
+neqtvar:	T_NEQ(var, tvar)		 = 65 ( 1 );
+ret: 		T_RET(num)				 = 66 ( 1 );
+ret:		T_RET(var)				 = 67 ( 1 );
+ret:		T_RET(tvar)				 = 68 ( 1 );
+stmt:		ret						 = 69 ( 1 );
+%%
+
+
+
+
+
+void burm_reduce(NODEPTR_TYPE bnode, int goalnt)
+{
+  int ruleNo = burm_rule (STATE_LABEL(bnode), goalnt);
+  short *nts = burm_nts[ruleNo];
+  NODEPTR_TYPE kids[100];
+  int i;
+
+  if (ruleNo==0) {
+    fprintf(stderr, "tree cannot be derived from start symbol");
+    exit(1);
+  }
+  burm_kids (bnode, ruleNo, kids);
+  for (i = 0; nts[i]; i++)
+    burm_reduce (kids[i], nts[i]);    /* reduce kids */
+
+#if DEBUG
+  printf ("%s", burm_string[ruleNo]);  /* display rule */
+#endif
+
+  switch (ruleNo) {
+  case 10:
+
+    break;
+  case 11:
+
+    break;
+  case 12:
+
+    break;
+  case 13:
+
+    break;
+  case 14:
+
+    break;
+  case 15:
+
+    break;
+  case 16:
+
+    break;
+  case 30:
+	bnode->name = asm_op_tvar_num("add", bnode->right, bnode->left->val);
+    break;
+  case 17:
+
+    break;
+  case 31:
+	bnode->name = asm_op_tvar_tvar("add", bnode->left, bnode->right);
+    break;
+  case 18:
+
+    break;
+  case 32:
+	bnode->name = asm_op_tvar_var("add", bnode->left, bnode->right);
+    break;
+  case 19:
+
+    break;
+  case 33:
+	bnode->name = asm_op_tvar_var("add", bnode->right, bnode->left);
+    break;
+  case 34:
+	bnode->name = asm_op_reg_num("imul", bnode->left, bnode->right->val);
+    break;
+  case 35:
+	bnode->name = asm_op_reg_num("imul", bnode->right, bnode->left->val); 
+    break;
+  case 36:
+ 	bnode->name = asm_op_reg_reg("imul", bnode->left, bnode->right); 
+    break;
+  case 50:
+	bnode->name = asm_cmpop_reg_num("g", "le", bnode->left, bnode->right->val);
+    break;
+  case 37:
+	bnode->name = asm_op_tvar_num("imul", bnode->left, bnode->right->val);
+    break;
+  case 51:
+	bnode->name = asm_cmpop_reg_num("g", "le", bnode->right, bnode->left->val); 
+    break;
+  case 38:
+	bnode->name = asm_op_tvar_num("imul", bnode->right, bnode->left->val); 
+    break;
+  case 52:
+ 	bnode->name = asm_cmpop_reg_reg("g", "le", bnode->left, bnode->right);
+    break;
+  case 39:
+ 	bnode->name = asm_op_tvar_tvar("imul", bnode->left, bnode->right); 
+    break;
+  case 53:
+	bnode->name = asm_cmpop_tvar_num("g", "le", bnode->left, bnode->right->val);
+    break;
+  case 54:
+	bnode->name = asm_cmpop_tvar_num("g", "le", bnode->right, bnode->left->val);
+    break;
+  case 55:
+	bnode->name = asm_cmpop_tvar_tvar("g", "le", bnode->left, bnode->right);
+    break;
+  case 56:
+	bnode->name = asm_cmpop_tvar_var("g", "le", bnode->left, bnode->right);
+    break;
+  case 1:
+
+    break;
+  case 57:
+	bnode->name = asm_cmpop_tvar_var("g", "le", bnode->right, bnode->left);
+    break;
+  case 2:
+
+    break;
+  case 58:
+	bnode->name = asm_cmpop_reg_num("e", "ne", bnode->left, bnode->right->val);
+    break;
+  case 3:
+
+    break;
+  case 59:
+	bnode->name = asm_cmpop_reg_num("e", "ne", bnode->right, bnode->left->val); 
+    break;
+  case 4:
+	bnode->val = bnode->left->val + bnode->right->val;
+    break;
+  case 5:
+	bnode->val = ~bnode->left->val;
+    break;
+  case 6:
+	bnode->val = -bnode->left->val;
+    break;
+  case 7:
+	bnode->val = bnode->left->val * bnode->right->val;
+    break;
+  case 8:
+
+    break;
+  case 9:
+
+    break;
+  case 20:
+
+    break;
+  case 21:
+
+    break;
+  case 22:
+ 	bnode->name = asm_not_var(bnode->left);
+    break;
+  case 23:
+	bnode->name = asm_not_tvar(bnode->left);
+    break;
+  case 24:
+ 	bnode->name = asm_neg_var(bnode->left);
+    break;
+  case 25:
+	bnode->name = asm_neg_tvar(bnode->left);
+    break;
+  case 26:
+	bnode->name = asm_op_reg_num("add", bnode->left, bnode->right->val);
+    break;
+  case 40:
+	bnode->name = asm_op_tvar_var("imul", bnode->left, bnode->right);
+    break;
+  case 27:
+	bnode->name = asm_op_reg_num("add", bnode->right, bnode->left->val); 
+    break;
+  case 41:
+	bnode->name = asm_op_tvar_var("imul", bnode->right, bnode->left);
+    break;
+  case 28:
+ 	bnode->name = asm_op_reg_reg("add", bnode->left, bnode->right); 
+    break;
+  case 42:
+	bnode->name = asm_op_reg_num("or", bnode->left, bnode->right->val);
+    break;
+  case 29:
+	bnode->name = asm_op_tvar_num("add", bnode->left, bnode->right->val);
+    break;
+  case 43:
+	bnode->name = asm_op_reg_num("or", bnode->right, bnode->left->val); 
+    break;
+  case 44:
+ 	bnode->name = asm_op_reg_reg("or", bnode->left, bnode->right); 
+    break;
+  case 45:
+	bnode->name = asm_op_tvar_num("or", bnode->left, bnode->right->val);
+    break;
+  case 46:
+	bnode->name = asm_op_tvar_num("or", bnode->right, bnode->left->val);
+    break;
+  case 60:
+ 	bnode->name = asm_cmpop_reg_reg("e", "ne", bnode->left, bnode->right);
+    break;
+  case 47:
+	bnode->name = asm_op_tvar_tvar("or", bnode->left, bnode->right);
+    break;
+  case 61:
+	bnode->name = asm_cmpop_tvar_num("e", "ne", bnode->left, bnode->right->val);
+    break;
+  case 48:
+	bnode->name = asm_op_tvar_var("or", bnode->left, bnode->right);
+    break;
+  case 62:
+	bnode->name = asm_cmpop_tvar_num("e", "ne", bnode->right, bnode->left->val);
+    break;
+  case 49:
+	bnode->name = asm_op_tvar_var("or", bnode->right, bnode->left);
+    break;
+  case 63:
+	bnode->name = asm_cmpop_tvar_tvar("e", "ne", bnode->left, bnode->right);
+    break;
+  case 64:
+	bnode->name = asm_cmpop_tvar_var("e", "ne", bnode->left, bnode->right);
+    break;
+  case 65:
+	bnode->name = asm_cmpop_tvar_var("e", "ne", bnode->right, bnode->left);
+    break;
+  case 66:
+	asm_ret_num(bnode->left);
+    break;
+  case 67:
+	asm_ret_reg(bnode->left); 
+    break;
+  case 68:
+	asm_ret_tvar(bnode->left); 
+    break;
+  case 69:
+	asm_ret();
+    break;
+  default:    assert (0);
+  }
+}
