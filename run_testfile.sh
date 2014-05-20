@@ -2,8 +2,8 @@
 
 make
 
-testFolder=~/test/codea
-targetFolder=/tmp/codea
+testFolder=tests
+targetFolder=tmp
 
 mkdir $targetFolder
 #rm $targetFolder/*
