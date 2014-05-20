@@ -11,7 +11,7 @@ symtab_t *symtab_init(void)
 	return tab;
 }
 
-symtab_t *symtab_add(symtab_t *tab, char *reg, char *name, char *ref)
+symtab_t *symtab_add(symtab_t *tab, char *reg, char *name, char *ref, int offset)
 {
 	/* ok, now lets add the new entry */
 	symtabentry_t *entry = stentry_init();
@@ -28,6 +28,7 @@ symtab_t *symtab_add(symtab_t *tab, char *reg, char *name, char *ref)
 		entry->ref = strdup(ref);
 	else 
 		entry->ref = NULL;
+	entry->offset = offset;
 	entry->next = NULL;
 	stentry_append(tab, entry);
 	return tab;
@@ -190,6 +191,7 @@ symtabentry_t *stentry_dup(symtabentry_t *entry)
 		dup->ref = strdup(entry->ref);
 	else 
 		dup->ref = NULL;
+	dup->offset = entry->offset;
 	dup->next = NULL;
 	return dup;
 }

@@ -75,7 +75,7 @@ char *registers[] = { "rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 @attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *dummy1; }					Structdef
 @attributes { symtab_t *structtab; symtab_t *fieldtab; }									Funcdef
 @attributes { symtab_t *tab; } 																ParamDef
-@attributes { symtab_t *fieldtab; char *structname; }										FieldDef
+@attributes { symtab_t *fieldtab; char *structname; int offset; }							FieldDef
 @attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; tnode_t *node; }	Stats
 @attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; tnode_t *node; }	Stat
 @attributes { symtab_t *structtab; symtab_t *fieldtab; symtab_t *vartab; }					Condlist
@@ -139,9 +139,10 @@ Def: Funcdef
 Structdef: STRUCT IDENTIFIER ':' FieldDef END
 		@{
 			
-			@i @Structdef.dummy1@ = symtab_add(@Structdef.0.structtab@, NULL, @IDENTIFIER.0.name@, NULL);
+			@i @Structdef.dummy1@ = symtab_add(@Structdef.0.structtab@, NULL, @IDENTIFIER.0.name@, NULL, 0);
 			@i @FieldDef.fieldtab@  = @Structdef.fieldtab@;
 			@i @FieldDef.structname@ = @IDENTIFIER.0.name@;
+			@i @FieldDef.offset@ = 0;
 		@}
 	;
 	
@@ -149,8 +150,9 @@ FieldDef:
 
 	| FieldDef IDENTIFIER
 		@{
-			@i @FieldDef.1.fieldtab@ = symtab_add( @FieldDef.0.fieldtab@, next_reg(), @IDENTIFIER.name@, @FieldDef.0.structname@);
+			@i @FieldDef.1.fieldtab@ = symtab_add( @FieldDef.0.fieldtab@, next_reg(), @IDENTIFIER.name@, @FieldDef.0.structname@, @FieldDef.offset@);
 			@i @FieldDef.1.structname@ = @FieldDef.0.structname@;
+			@i @FieldDef.1.offset@ = @FieldDef.0.offset@;
 		@}
 	;
 	
@@ -163,7 +165,7 @@ ParamDef:
 	| ParamDef IDENTIFIER
 		@{
 			//@i @ParamDef.1.tab@ = symtab_add( @ParamDef.0.tab@, @IDENTIFIER.name@, @ParamDef.0.structname@);
-			@i @ParamDef.0.tab@ = symtab_add( @ParamDef.1.tab@, next_reg(), @IDENTIFIER.name@, NULL);
+			@i @ParamDef.0.tab@ = symtab_add( @ParamDef.1.tab@, next_reg(), @IDENTIFIER.name@, NULL, 0);
 		@}
 	;
 	
@@ -333,7 +335,7 @@ LetDef:
 			@i @Expr.0.visscope@ = @LetDef.0.visscope@;
 			
 			//@i @LetDef.1.vartab@   = symtab_add( @LetDef.0.vartab@, @IDENTIFIER.0.name@, NULL);
-			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, NULL, @IDENTIFIER.0.name@, NULL);
+			@i @LetDef.0.vartab@   = symtab_add( @LetDef.1.vartab@, NULL, @IDENTIFIER.0.name@, NULL, 0);
 
 			@i @LetDef.1.fieldtab@ = @LetDef.0.fieldtab@;
 			@i @LetDef.1.visscope@ = @LetDef.0.visscope@;
