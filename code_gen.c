@@ -53,8 +53,9 @@ char *asm_func_prolog(char *name)
 char *asm_not_var(tnode_t *varnode)
 {
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tnotq %%%s\n", varnode->reg);
-	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %%%s\n", varnode->reg, tmp_regs[0]);
+	(void) fprintf(output, "\tnotq %%%s\n", tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 	return var;
 }
 
@@ -67,8 +68,9 @@ char *asm_not_tvar(tnode_t *tvarnode)
 char *asm_neg_var(tnode_t *varnode)
 {	
 	char *var = asm_tmp_var();
-	(void) fprintf(output, "\tnegq %%%s\n", varnode->reg);
-	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %%%s\n", varnode->reg, tmp_regs[0]);
+	(void) fprintf(output, "\tnegq %%%s\n", tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 	return var;
 }
 
@@ -84,10 +86,9 @@ char *asm_op_reg_num(char *operator, tnode_t *varnode, int64_t val)
 {
 	
 	char *var = asm_tmp_var();
-	//(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
-	//(void) fprintf(output, "\t%s $%d, %s\n", operator, val, var);
-	(void) fprintf(output, "\t%s $%d, %%%s\n", operator, val, varnode->reg);
-	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %%%s\n", varnode->reg, tmp_regs[0]);
+	(void) fprintf(output, "\t%s $%d, %%%s\n", operator, val, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 	//return varnode->reg;
 	return var;
 }
@@ -97,8 +98,9 @@ char *asm_op_reg_reg(char *operator, tnode_t *varnode1, tnode_t *varnode2)
 	char *var = asm_tmp_var();
 	
 	//(void) fprintf(output, "\tmovq %%%s, %s\n", varnode1->reg, var);
-	(void) fprintf(output, "\t%s %%%s, %%%s\n", operator, varnode1->reg, varnode2->reg);
-	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode2->reg, var);
+	(void) fprintf(output, "\tmovq %%%s, %%%s\n", varnode1->reg, tmp_regs[0]);
+	(void) fprintf(output, "\t%s %%%s, %%%s\n", operator, varnode2->reg, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
 	/*
 	(void) fprintf(output, "\t%s %%%s, %%%s\n", operator, varnode1->reg, varnode2->reg);
 	(void) fprintf(output, "\tmovq %%%s, %s\n", varnode2->reg, var);
