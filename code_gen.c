@@ -180,7 +180,7 @@ char *asm_cmpop_tvar_num(char *cmp_op, tnode_t *tvarnode, int64_t val)
 {
 	//char *var = asm_tmp_var();
 	/* most operations can't take a memory location as source and dest */
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
 	(void) fprintf(output, "\tmovq $%d, %%%s\n", val, tmp_regs[1]);
 	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", tmp_regs[1], tmp_regs[0]);
 	asm_eval_cmp(cmp_op, tvarnode->name);
@@ -191,9 +191,9 @@ char *asm_cmpop_num_tvar(char *cmp_op, int64_t val, tnode_t *tvarnode)
 {
 	//char *var = asm_tmp_var();
 	/* most operations can't take a memory location as source and dest */
-	(void) fprintf(output, "\nmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
-	(void) fprintf(output, "\nmovq $%d, %%%s\n", val, tmp_regs[1]);
-	(void) fprintf(output, "\tcmpq %%%s, $%d\n", tmp_regs[0], tmp_regs[1]);
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq $%d, %%%s\n", val, tmp_regs[1]);
+	(void) fprintf(output, "\tcmpq %%%s, %%%s\n", tmp_regs[0], tmp_regs[1]);
 	asm_eval_cmp(cmp_op, tvarnode->name);
 	return tvarnode->name;
 }
