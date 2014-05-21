@@ -606,8 +606,8 @@ Term: '(' Expr ')'
 			@i @Term.1.visscope@ = @Term.0.visscope@;
 			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
 			
-			@i @Term.node@ = NULL;
-			/*@codegen @Term.node@ = new_num(@NUMBER.val@);*/
+			@i @Term.0.node@ = NULL;
+			@codegen @Term.node@ = new_field(@IDENTIFIER.name@, @Term.1.node@, stentry_find(@Term.0.fieldtab@, @IDENTIFIER.name@) == (symtabentry_t *) NULL ? 0 : stentry_find(@Term.0.fieldtab@, @IDENTIFIER.name@)->offset);
 		@}
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{

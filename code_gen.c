@@ -246,3 +246,17 @@ void asm_ret_tvar(tnode_t *tvarnode)
 {
 	(void) fprintf(output, "\tmovq %s, %%rax\n", tvarnode->name);
 }
+
+char *asm_fieldref_var(tnode_t *varnode)
+{
+	char *var = asm_tmp_var();
+	(void) fprintf(output, "\tmovq %i(%%%s), %%%s\n", varnode->offset*8, varnode->reg, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %%%s, %s\n", tmp_regs[0], var);
+	return var;
+}
+char *asm_fieldref_tvar(tnode_t *tvarnode)
+{
+	(void) fprintf(output, "\tmovq %s, %%%s\n", tvarnode->name, tmp_regs[0]);
+	(void) fprintf(output, "\tmovq %i(%%%s), %s\n", tvarnode->offset*8, tmp_regs[0], tvarnode->name);
+	return tvarnode->name;
+}

@@ -27,6 +27,7 @@ char *asm_cmpop_num_tvar(char *cmp_op, int64_t val, tnode_t *tvarnode);
 char *asm_cmpop_tvar_tvar(char *cmp_op, tnode_t *tvarnode1, tnode_t *tvarnode2);
 char *asm_cmpop_tvar_var(char *cmp_op, tnode_t *tvarnode, tnode_t *varnode);
 char *asm_cmpop_var_tvar(char *cmp_op, tnode_t *varnode, tnode_t *tvarnode);
-	
+char *asm_fieldref_var(tnode_t *varnode);
+char *asm_fieldref_tvar(tnode_t *tvarnode);
 	
 #endif
