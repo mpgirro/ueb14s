@@ -26,6 +26,8 @@ void semanticerror(void);
 char *next_reg(void);
 void reset_regcursor(void);
 
+int get_offset(symtab_t *tab, char *name);
+
 void burm_label(NODEPTR_TYPE);
 void burm_reduce(NODEPTR_TYPE bnode, int goalnt);
 
@@ -148,11 +150,11 @@ Structdef: STRUCT IDENTIFIER ':' FieldDef END
 	
 FieldDef:
 
-	| FieldDef IDENTIFIER
+	| IDENTIFIER FieldDef 
 		@{
 			@i @FieldDef.1.fieldtab@ = symtab_add( @FieldDef.0.fieldtab@, next_reg(), @IDENTIFIER.name@, @FieldDef.0.structname@, @FieldDef.offset@);
 			@i @FieldDef.1.structname@ = @FieldDef.0.structname@;
-			@i @FieldDef.1.offset@ = @FieldDef.0.offset@;
+			@i @FieldDef.1.offset@ = @FieldDef.0.offset@ + 1;
 		@}
 	;
 	
@@ -607,7 +609,7 @@ Term: '(' Expr ')'
 			@i @Term.1.fieldtab@ = @Term.0.fieldtab@;	
 			
 			@i @Term.0.node@ = NULL;
-			@codegen @Term.node@ = new_field(@IDENTIFIER.name@, @Term.1.node@, stentry_find(@Term.0.fieldtab@, @IDENTIFIER.name@) == (symtabentry_t *) NULL ? 0 : stentry_find(@Term.0.fieldtab@, @IDENTIFIER.name@)->offset);
+			@codegen @Term.node@ = new_field(@IDENTIFIER.name@, @Term.1.node@, get_offset(@Term.0.fieldtab@, @IDENTIFIER.name@));
 		@}
 	| IDENTIFIER  /* Lesender Variablenzugriff */
 		@{
@@ -688,6 +690,19 @@ char *next_reg(void)
 void reset_regcursor(void)
 {
 	regcursor = -1;
+}
+
+int get_offset(symtab_t *tab, char *name)
+{
+	symtabentry_t *entry = stentry_find(tab, name);
+	if( entry == NULL )
+	{
+		(void) fprintf(stderr, "no field named %s found --> offset=0\n", name);
+		return 0;
+	} else {
+		//(void) fprintf(stderr, "offset for field named %s is: %i\n", name, entry->offset);
+		return entry->offset;	
+	}		
 }
 
 
