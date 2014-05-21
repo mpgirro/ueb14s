@@ -142,6 +142,8 @@ void symtab_isdef(symtab_t *tab, char *name)
 	}
 }
 
+
+
 void symtab_print(symtab_t *tab){
 	
 	symtabentry_t *cursor = tab->first;

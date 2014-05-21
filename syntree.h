@@ -14,7 +14,9 @@ typedef enum node_type
 	T_OR  = 7,
 	T_GRE = 8,
 	T_NEQ = 9,
-	T_NEG = 10
+	T_NEG = 10,
+	T_TVAR= 11,
+	T_FIE=12
 } nodetype_t;
 
 /* === structs === */
@@ -30,6 +32,7 @@ typedef struct tree_node
 	char *name;
 	int64_t val;
 	char *reg;
+	int offset;
 } tnode_t;
 
 typedef tnode_t *treenodeptr;  /* so that burg/iburg understands it */
@@ -47,6 +50,7 @@ typedef tnode_t *treenodeptr;  /* so that burg/iburg understands it */
 tnode_t *new_node(nodetype_t type, tnode_t *left, tnode_t *right);
 tnode_t *new_num(int64_t val);
 tnode_t *new_var(char *name, char *reg);
+tnode_t *new_field(char *name, tnode_t *left, int offset);
 tnode_t *new_op(nodetype_t type, tnode_t *left, tnode_t *right);
 tnode_t *new_ret(tnode_t *left);
 

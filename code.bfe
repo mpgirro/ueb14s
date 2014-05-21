@@ -51,7 +51,7 @@ tvar:		grevar					# 0
 tvar:		gretvar					# 0	
 tvar:		neqvar					# 0	
 tvar:		neqtvar					# 0		
-tvar:		fieldvar				# 1
+tvar:		fieldvar				# 1 
 tvar: 		fieldtvar				# 1
 notvar:		T_NOT(var)				# 1 #	bnode->name = asm_not_var(bnode->left);
 nottvar:	T_NOT(tvar)				# 1 #	bnode->name = asm_not_tvar(bnode->left);
@@ -97,8 +97,8 @@ neqtvar:	T_NEQ(num, tvar)		# 3 #	bnode->name = asm_cmpop_tvar_num("e", bnode->ri
 neqtvar:	T_NEQ(tvar, tvar)		# 3 #	bnode->name = asm_cmpop_tvar_tvar("e", bnode->left, bnode->right);
 neqtvar:	T_NEQ(tvar, var)		# 3 #	bnode->name = asm_cmpop_tvar_var("e", bnode->left, bnode->right);
 neqtvar:	T_NEQ(var, tvar)		# 3 #	bnode->name = asm_cmpop_tvar_var("e", bnode->right, bnode->left);
-fieldvar:	T_FIE(var)				# 2 #	bnode->name = asm_fieldref_var(bnode->left);
-fieldtvar:	T_FIE(tvar)				# 2 # 	bnode->name = asm_fieldref_tvar(bnode->left);
+fieldvar:	T_FIE(var)				# 2 #	bnode->name = asm_fieldref_var(bnode);
+fieldtvar:	T_FIE(tvar)				# 2 # 	bnode->name = asm_fieldref_tvar(bnode);
 
 %%
 

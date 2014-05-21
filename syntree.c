@@ -29,6 +29,15 @@ tnode_t *new_var(char *name, char *reg)
 	return node;
 }
 
+tnode_t *new_field(char *name, tnode_t *left, int offset)
+{
+	tnode_t *node = new_node(T_FIE, left, NULL);
+	node->name = name;
+	node->reg = left->reg; // this is the start register of the memory block
+	node->offset = offset;
+	return node;
+}
+
 tnode_t *new_op(nodetype_t type, tnode_t *left, tnode_t *right)
 {
 	tnode_t *node = new_node(type, left, right);
