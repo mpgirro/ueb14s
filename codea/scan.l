@@ -1,0 +1,95 @@
+
+%{  /* Definitions */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h> /* for 64 bit int */
+#include "oxout.tab.h"
+#include "symtab.h"
+#include "syntree.h"
+
+extern void lexerror(int);
+void process_comment(char *comment);
+
+%}
+
+%option   yylineno
+
+IDENTIFIER	[a-zA-Z]+[0-9a-zA-Z_]*
+DECNUMBER	[0-9]+
+HEXNUMBER	[0-9]+[0-9a-fA-F]*[H|h]
+WHITESPACE	[ \t\n]
+COMMENT		"/*"
+OTHER		.
+
+%% /* Rules */
+
+{WHITESPACE}	;
+{COMMENT}	process_comment(yytext);
+
+struct	{ return STRUCT; };
+end		{ return END; 	 };
+func	{ return FUNC; 	 };
+return	{ return RETURN; };
+with	{ return WITH;   };
+do		{ return DO;     };
+let		{ return LET;    };
+in		{ return IN;     };
+cond	{ return COND;   };
+then	{ return THEN;   };
+not		{ return NOT;    };
+or		{ return OR; 	 };
+
+\:		{ return ':'; };
+\(		{ return '('; };
+\)		{ return ')'; };
+\;		{ return ';'; };
+\.		{ return '.'; };
+\-		{ return '-'; };
+\+		{ return '+'; };
+\*		{ return '*'; };
+\>		{ return '>'; };
+\=		{ return '='; };
+\,		{ return ','; };
+
+"<>"		{ return NOTEQUAL; };
+
+{DECNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 10);*/ return NUMBER; @{ @NUMBER.val@ = (int64_t) strtol(yytext,NULL,10); @} };
+{HEXNUMBER}	{ /*yylval.nval = (signed long) strtol( yytext, NULL, 16);*/ return NUMBER; @{ @NUMBER.val@ = (int64_t) strtol(yytext,NULL,16); @} };
+
+{IDENTIFIER}	{ return IDENTIFIER; @{ @IDENTIFIER.name@ = strdup(yytext); @} };
+
+{OTHER}		{ lexerror(yylineno); };
+
+%% /* Code */
+
+void process_comment(char *comment)
+{
+	/* stole this from https://www.cs.princeton.edu/~appel/modern/c/software/flex/flex.html */
+	register int c;
+
+	for ( ; ; )
+	{
+		/* eat up text of comment */
+		while ( (c = input()) != '*' && c != EOF );
+
+		/* so, lets check if the comment is truly over */
+		if ( c == '*' )
+		{	
+			/* eat up all the stars, in case there are more */
+			while ( (c = input()) == '*' ) ;
+                    	
+			/* check if comments is finally over */
+			if ( c == '/' )
+				break;    /* found the end */
+        }
+
+		/* oh boy - this should never be happening */
+        if ( c == EOF )
+        {
+			lexerror(yylineno);
+            break;
+        }
+	}
+}
